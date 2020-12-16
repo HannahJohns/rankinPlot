@@ -1,4 +1,13 @@
-
+#' grottaBar
+#'
+#' Automates the production of a Grotta Bar in ggplot
+#'
+#' @param x a 2-dimensional table, returned by the table() function
+#' @param groupName a character string giving the name of the group varialble
+#' @param scoreName a character string giving the n
+#' @param width a number adjusting the width of the lines between bars
+#'
+#' @references aosmith's answer to the following question: https://stackoverflow.com/questions/51213169/is-there-an-efficient-way-to-draw-lines-between-different-elements-in-a-stacked
 grottaBar <- function(x,groupName,scoreName,width=0.05){
 
   x <- as.data.frame(x)
