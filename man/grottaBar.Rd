@@ -4,19 +4,56 @@
 \alias{grottaBar}
 \title{grottaBar}
 \usage{
-grottaBar(x, groupName, scoreName, width = 0.05)
+grottaBar(
+  x,
+  groupName,
+  scoreName,
+  strataName = NULL,
+  colourScheme = "colour",
+  width = 0.9,
+  returnData = FALSE,
+  printNumbers = TRUE,
+  textSize = 15,
+  numberSize = 5,
+  lineSize = 0.5
+)
 }
 \arguments{
-\item{x}{a 2-dimensional table, returned by the table() function}
+\item{x}{a 2- or 3- dimensional table, returned by the table() function}
 
 \item{groupName}{a character string giving the name of the group varialble}
 
-\item{scoreName}{a character string giving the n}
+\item{scoreName}{a character string giving outcome (mRS) labels}
 
 \item{width}{a number adjusting the width of the lines between bars}
+
+\item{strataNamea}{character string giving the strata variable name}
 }
 \description{
 Automates the production of a Grotta Bar in ggplot
+}
+\examples{
+
+df <- alteplase
+df$mRS <- df$mRS -1
+x <- table(mRS=df$mRS,
+           Group=df$treat,
+           Time=df$time)
+
+grottaBar(x,groupName="Group",
+          scoreName = "mRS",
+          strataName="Time",
+          colourScheme ="colour"
+ )
+
+x <- table(mRS=df$mRS,
+          Group=df$treat)
+grottaBar(x,groupName="Group",
+          scoreName = "mRS",
+         colourScheme ="colour"
+)
+
+
 }
 \references{
 aosmith's answer to the following question: https://stackoverflow.com/questions/51213169/is-there-an-efficient-way-to-draw-lines-between-different-elements-in-a-stacked
