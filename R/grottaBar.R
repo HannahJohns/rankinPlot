@@ -133,7 +133,7 @@ grottaBar <- function(x,groupName,scoreName,strataName = NULL,
 
 
   if(!is.null(strataName)){
-    ggp <- ggp+facet_wrap(~strata, ncol = 2, dir = "v")
+    ggp <- ggp+facet_wrap(~strata, ncol = 1, dir = "v")
   }
 
   ggp <- ggp +
