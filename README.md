@@ -6,5 +6,6 @@ Currently supports:
 
 * Grotta Bars
 
-A "Grotta Bar" is a stacked proportional bar chart, rotated to be horizontal, with lines connecting the two groups.
-It is how primary outcome data is often represented in stroke research.
+A Grotta bar chart is a common data visualisation tool in stroke research, and is in essence a horizontally stacked proportional bar
+chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
+categories across groups. 

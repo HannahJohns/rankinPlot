@@ -4,18 +4,14 @@
 \alias{grottaBar}
 \title{grottaBar}
 \usage{
-grottaBar(
-  x,
-  groupName,
-  scoreName,
-  strataName = NULL,
-  colourScheme = "colour",
-  width = 0.9,
-  returnData = FALSE,
-  printNumbers = TRUE,
-  textSize = 15,
-  numberSize = 5,
-  lineSize = 0.5
+grottaBar(x,groupName,scoreName,strataName = NULL,
+          colourScheme="lowGreen",
+          printNumbers = "count",
+          nCol = 1, dir = "v",
+          width=0.9,
+          textSize=15, numberSize=5,
+          lineSize=0.5,
+          returnData = FALSE
 )
 }
 \arguments{
@@ -25,12 +21,55 @@ grottaBar(
 
 \item{scoreName}{a character string giving outcome (mRS) labels}
 
+\item{strataName}{a character string giving the strata variable name}
+
+\item{colourScheme}{a character string indicating the colours that should be used by the plot}
+
+\item{printNumbers}{a character string indicating if numbers should be printed for each category.}
+
+\item{nCol}{an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.}
+
+\item{dir}{a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}.}
+
 \item{width}{a number adjusting the width of the lines between bars}
 
-\item{strataNamea}{character string giving the strata variable name}
+\item{textSize}{a number indicating the size of text labels}
+
+\item{numberSize}{a number indicating the size of printed numbers}
+
+\item{lineSize}{a number indicating the thickness of lines in the plot}
+
+\item{returnData}{a boolean indicating if the data used to create the plot should be returned. For expert users only.}
+}
+\value{
+A ggplot object, or a list containing a ggplot object and the data used to generate it.
 }
 \description{
-Automates the production of a Grotta Bar in ggplot
+Automates the production of a Grotta Bar using \code{ggplot()}
+}
+\details{
+This tool produces a "Grotta" bar chart based on a table of count data.
+A Grotta bar chart is a common data visualisation tool in stroke research, and is in essence a horizontally stacked proportional bar
+chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
+categories across groups.
+
+The tool provides three default options for \code{colourScheme}:
+\itemize{
+    \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are coloured green}
+    \item{\code{"lowRed"}}{ A "traffic light" gradient from green to red, where low scores are coloured red}
+    \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
+}
+
+In addition to these, setting \code{colourScheme="custom"} allows for a
+user-specified colour scheme by using the ggplot2 family of \code{scale_fill_} functions.
+
+There are four options for \code{printNumbers}:
+\itemize{
+    \item{\code{"count"}}{ The raw counts in the table.}
+    \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
+    \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
+    \item{\code{"none"}}{ Do not print any numbers.}
+}
 }
 \examples{
 
@@ -43,18 +82,20 @@ x <- table(mRS=df$mRS,
 grottaBar(x,groupName="Group",
           scoreName = "mRS",
           strataName="Time",
-          colourScheme ="colour"
+          colourScheme ="lowGreen"
+ )
+
+  grottaBar(x,groupName="Time",
+          scoreName = "mRS",
+          strataName="Group",
+          colourScheme ="grayscale"
  )
 
 x <- table(mRS=df$mRS,
           Group=df$treat)
-grottaBar(x,groupName="Group",
-          scoreName = "mRS",
-         colourScheme ="colour"
-)
+   grottaBar(x,groupName="Group",
+             scoreName = "mRS",
+             colourScheme ="custom"
+   ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 
-
-}
-\references{
-aosmith's answer to the following question: https://stackoverflow.com/questions/51213169/is-there-an-efficient-way-to-draw-lines-between-different-elements-in-a-stacked
 }

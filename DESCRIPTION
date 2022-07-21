@@ -1,12 +1,16 @@
 Package: rankinPlot
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.2.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Convenient Plotting for the Modified Rankin Scale and Other Ordinal Outcome Data
+Version: 1.0.0
+Authors@R: person("Hannah","Johns", role=c("aut","cre"),email="htjohns@gmail.com",comment=c(ORCID="0000-0003-2135-0504"))
+Maintainer: Hannah Johns <htjohns@gmail.com>
+Description: Provides convenient tools for visualising ordinal outcome data. This tool was built with for the modified Rankin Scale and stroke research, but should be compatible with any ordinal outcome data.
+License: GPL (>=2.0)
 Encoding: UTF-8
 LazyData: true
+Depends:
+    R (>= 2.10)
+Imports:
+    ggplot2 (>= 3.3),
+    scales (>= 1.2)
 RoxygenNote: 7.2.0
