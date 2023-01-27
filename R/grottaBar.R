@@ -23,6 +23,8 @@
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
 #' @param dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}.
 #' @param textSize a number indicating the size of text labels
+#' @param textColor vector of two colors for text labels
+#' @param textCut numeric to set cut off for text color
 #' @param numberSize a number indicating the size of printed numbers
 #' @param textWeight a character string indicating weight of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".
 #' @param lineSize a number indicating the thickness of lines in the plot
@@ -87,14 +89,21 @@
 #'           textWeight = "italic",
 #'           printNumbers = "n (percentage)"
 #'  ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
-grottaBar <- function(x,groupName,scoreName,strataName = NULL,
-                      colourScheme="lowGreen",
-                      printNumbers="count",
-                      nCol=1, dir="v",
-                      width=0.9,
-                      textSize=15, numberSize=5,
-                      textWeight="plain",
-                      lineSize=0.5,
+grottaBar <- function(x,
+                      groupName,
+                      scoreName,
+                      strataName = NULL,
+                      colourScheme = "lowGreen",
+                      printNumbers = "count",
+                      nCol = 1,
+                      dir = "v",
+                      width = 0.9,
+                      textSize = 15,
+                      textColor = c("black", "white"),
+                      textCut = 5,
+                      numberSize = 5,
+                      textWeight = "plain",
+                      lineSize = 0.5,
                       returnData = FALSE
 ){
 
@@ -186,6 +195,7 @@ grottaBar <- function(x,groupName,scoreName,strataName = NULL,
       ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
                                      fontface = textWeight,
                                      ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                  color = as.numeric(score) > textCut,
                                                   label=sprintf("%d",n)))
     } else {
 
@@ -195,6 +205,7 @@ grottaBar <- function(x,groupName,scoreName,strataName = NULL,
       ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
                                      fontface = textWeight,
                                      ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                  color = as.numeric(score) > textCut,
                                                   label=sprintf(sprintf("%%0.%df",maxDecimal),n)))
     }
 
@@ -202,11 +213,13 @@ grottaBar <- function(x,groupName,scoreName,strataName = NULL,
     ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
                                    fontface = textWeight,
                                    ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                color = as.numeric(score) > textCut,
                                                 label=sprintf("%0.2f",p)))
   } else if (printNumbers=="percentage"){
     ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
                                    fontface = textWeight,
                                    ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                color = as.numeric(score) > textCut,
                                                 label=sprintf("%2.2f",100*p)))
   } else if (printNumbers=="n (percentage)") {
 
@@ -214,6 +227,7 @@ grottaBar <- function(x,groupName,scoreName,strataName = NULL,
       ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
                                      fontface = textWeight,
                                      ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                  color = as.numeric(score) > textCut,
                                                   label=sprintf("%d\n(%2.1f%s)",n,100*p,"%")))
     } else {
       stop("n (percentage) works only with integers")
@@ -271,7 +285,8 @@ grottaBar <- function(x,groupName,scoreName,strataName = NULL,
                    panel.grid.minor = ggplot2::element_blank(),
                    text = ggplot2::element_text(size=textSize),
                    plot.margin = ggplot2::margin(1, 1, 1, 1, "cm")
-    )
+    )+
+    ggplot2::scale_color_manual(guide = "none", values = textColor)
 
   ggp
 
