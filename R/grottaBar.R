@@ -83,7 +83,7 @@
 #'
 #'   grottaBar(x,groupName="Group",
 #'           scoreName = "mRS",
-#'           colourScheme ="lowGreen",
+#'           colourScheme ="custom",
 #'           textWeight = "italic",
 #'           printNumbers = "n (percentage)"
 #'  ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
