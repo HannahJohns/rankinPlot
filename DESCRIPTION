@@ -14,3 +14,5 @@ Imports:
     ggplot2 (>= 3.3),
     scales (>= 1.2)
 RoxygenNote: 7.2.0
+Suggests: 
+    viridis
