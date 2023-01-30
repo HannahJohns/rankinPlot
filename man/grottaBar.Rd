@@ -5,13 +5,16 @@
 \title{grottaBar}
 \usage{
 grottaBar(x,groupName,scoreName,strataName = NULL,
-          colourScheme="lowGreen",
+          colorScheme="lowGreen",
           printNumbers = "count",
           nCol = 1, dir = "v",
-          width=0.9,
-          textSize=15, numberSize=5,
-          lineSize=0.5,
-          returnData = FALSE
+          width = 0.9,
+          textSize = 15, numberSize = 5,
+          textFace = "plain",
+          textColor = "black", textCut = 0,
+          lineSize = 0.5,
+          returnData = FALSE,
+          ...
 )
 }
 \arguments{
@@ -23,7 +26,7 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
 
 \item{strataName}{a character string giving the strata variable name}
 
-\item{colourScheme}{a character string indicating the colours that should be used by the plot}
+\item{colorScheme}{a character string indicating the colors that should be used by the plot}
 
 \item{printNumbers}{a character string indicating if numbers should be printed for each category.}
 
@@ -37,9 +40,17 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
 
 \item{numberSize}{a number indicating the size of printed numbers}
 
+\item{textFace}{a character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".}
+
+\item{textColor}{vector of two colors for text labels}
+
+\item{textCut}{Controls when the color of the text changes. The first \code{textCut} categories will use the first color}
+
 \item{lineSize}{a number indicating the thickness of lines in the plot}
 
 \item{returnData}{a boolean indicating if the data used to create the plot should be returned. For expert users only.}
+
+\item{...}{additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.}
 }
 \value{
 A ggplot object, or a list containing a ggplot object and the data used to generate it.
@@ -53,23 +64,27 @@ A Grotta bar chart is a common data visualisation tool in stroke research, and i
 chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 categories across groups.
 
-The tool provides three default options for \code{colourScheme}:
+The tool provides three default options for \code{colorScheme}:
 \itemize{
-    \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are coloured green}
-    \item{\code{"lowRed"}}{ A "traffic light" gradient from green to red, where low scores are coloured red}
+    \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
+    \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
     \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
 }
 
-In addition to these, setting \code{colourScheme="custom"} allows for a
-user-specified colour scheme by using the ggplot2 family of \code{scale_fill_} functions.
+In addition to these, setting \code{colorScheme="custom"} allows for a
+user-specified color scheme by using the ggplot2 family of \code{scale_fill_} functions.
 
-There are four options for \code{printNumbers}:
+The options for \code{printNumbers} are:
 \itemize{
     \item{\code{"count"}}{ The raw counts in the table.}
     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
+    \item{\code{"count.percentage"}}{ The raw count with percentage in parentheses.}
     \item{\code{"none"}}{ Do not print any numbers.}
 }
+
+These options may be abbreviated. \code{"p"} is not a valid abbreviation as it matches to multiple options.
+The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 }
 \examples{
 
@@ -82,20 +97,49 @@ x <- table(mRS=df$mRS,
 grottaBar(x,groupName="Group",
           scoreName = "mRS",
           strataName="Time",
-          colourScheme ="lowGreen"
+          colorScheme ="lowGreen"
  )
 
   grottaBar(x,groupName="Time",
           scoreName = "mRS",
           strataName="Group",
-          colourScheme ="grayscale"
+          colorScheme ="grayscale"
  )
 
 x <- table(mRS=df$mRS,
           Group=df$treat)
+
    grottaBar(x,groupName="Group",
              scoreName = "mRS",
-             colourScheme ="custom"
+             colorScheme ="custom"
    ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+
+  grottaBar(x,groupName="Group",
+          scoreName = "mRS",
+          colorScheme ="custom",
+          textFace = "italic",
+          printNumbers = "count.percentage"
+ ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+
+
+grottaBar(
+          x,
+          groupName = "Group",
+          scoreName = "mRS",
+          colorScheme = "custom",
+          textFace = "italic",
+          printNumbers = "count.percentage"
+) + viridis::scale_fill_viridis(discrete = TRUE, direction = -1)
+
+
+grottaBar(x,groupName="Group",
+           scoreName = "mRS",
+           colorScheme ="custom",
+           textFace = "italic",
+           textColor = c("black","white"),
+           textCut = 5,
+           printNumbers = "count.percentage"
+) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+
 
 }

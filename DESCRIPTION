@@ -1,10 +1,10 @@
 Package: rankinPlot
 Type: Package
 Title: Convenient Plotting for the Modified Rankin Scale and Other Ordinal Outcome Data
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: person("Hannah","Johns", role=c("aut","cre"),email="htjohns@gmail.com",comment=c(ORCID="0000-0003-2135-0504"))
 Maintainer: Hannah Johns <htjohns@gmail.com>
-Description: Provides convenient tools for visualising ordinal outcome data. This tool was built with for the modified Rankin Scale and stroke research, but should be compatible with any ordinal outcome data.
+Description: Provides convenient tools for visualising ordinal outcome data following the "Grotta Bar" approach pioneered by The National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group (1995) <doi:10.1056/NEJM199512143332401>.
 License: GPL (>=2.0)
 Encoding: UTF-8
 LazyData: true
@@ -13,6 +13,6 @@ Depends:
 Imports:
     ggplot2 (>= 3.3),
     scales (>= 1.2)
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Suggests: 
     viridis

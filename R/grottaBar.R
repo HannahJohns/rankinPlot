@@ -4,31 +4,35 @@
 #'
 #' @usage
 #' grottaBar(x,groupName,scoreName,strataName = NULL,
-#'           colourScheme="lowGreen",
+#'           colorScheme="lowGreen",
 #'           printNumbers = "count",
 #'           nCol = 1, dir = "v",
-#'           width=0.9,
-#'           textSize=15, numberSize=5,
-#'           lineSize=0.5,
-#'           returnData = FALSE
+#'           width = 0.9,
+#'           textSize = 15, numberSize = 5,
+#'           textFace = "plain",
+#'           textColor = "black", textCut = 0,
+#'           lineSize = 0.5,
+#'           returnData = FALSE,
+#'           ...
 #' )
 #'
 #' @param x a 2- or 3- dimensional table, returned by the table() function
 #' @param groupName a character string giving the name of the group varialble
 #' @param scoreName a character string giving outcome (mRS) labels
 #' @param strataName a character string giving the strata variable name
-#' @param colourScheme a character string indicating the colours that should be used by the plot
+#' @param colorScheme a character string indicating the colors that should be used by the plot
 #' @param width a number adjusting the width of the lines between bars
 #' @param printNumbers a character string indicating if numbers should be printed for each category.
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
 #' @param dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}.
 #' @param textSize a number indicating the size of text labels
-#' @param textColor vector of two colors for text labels
-#' @param textCut numeric to set cut off for text color
 #' @param numberSize a number indicating the size of printed numbers
-#' @param textWeight a character string indicating weight of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".
+#' @param textFace a character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".
+#' @param textColor vector of two colors for text labels
+#' @param textCut Controls when the color of the text changes. The first \code{textCut} categories will use the first color
 #' @param lineSize a number indicating the thickness of lines in the plot
 #' @param returnData a boolean indicating if the data used to create the plot should be returned. For expert users only.
+#' @param ... additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.
 #'
 #' @details
 #' This tool produces a "Grotta" bar chart based on a table of count data.
@@ -36,23 +40,27 @@
 #' chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 #' categories across groups.
 #'
-#' The tool provides three default options for \code{colourScheme}:
+#' The tool provides three default options for \code{colorScheme}:
 #' \itemize{
-#'     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are coloured green}
-#'     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are coloured red}
+#'     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
+#'     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
 #'     \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
 #' }
 #'
-#' In addition to these, setting \code{colourScheme="custom"} allows for a
-#' user-specified colour scheme by using the ggplot2 family of \code{scale_fill_} functions.
+#' In addition to these, setting \code{colorScheme="custom"} allows for a
+#' user-specified color scheme by using the ggplot2 family of \code{scale_fill_} functions.
 #'
-#' There are four options for \code{printNumbers}:
+#' The options for \code{printNumbers} are:
 #' \itemize{
 #'     \item{\code{"count"}}{ The raw counts in the table.}
 #'     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
 #'     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
+#'     \item{\code{"count.percentage"}}{ The raw count with percentage in parentheses.}
 #'     \item{\code{"none"}}{ Do not print any numbers.}
 #' }
+#'
+#' These options may be abbreviated. \code{"p"} is not a valid abbreviation as it matches to multiple options.
+#' The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 #'
 #' @returns A ggplot object, or a list containing a ggplot object and the data used to generate it.
 #'
@@ -67,45 +75,85 @@
 #' grottaBar(x,groupName="Group",
 #'           scoreName = "mRS",
 #'           strataName="Time",
-#'           colourScheme ="lowGreen"
+#'           colorScheme ="lowGreen"
 #'  )
 #'
 #'   grottaBar(x,groupName="Time",
 #'           scoreName = "mRS",
 #'           strataName="Group",
-#'           colourScheme ="grayscale"
+#'           colorScheme ="grayscale"
 #'  )
 #'
 #'x <- table(mRS=df$mRS,
 #'           Group=df$treat)
+#'
 #'    grottaBar(x,groupName="Group",
 #'              scoreName = "mRS",
-#'              colourScheme ="custom"
+#'              colorScheme ="custom"
 #'    ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 #'
 #'   grottaBar(x,groupName="Group",
 #'           scoreName = "mRS",
-#'           colourScheme ="custom",
-#'           textWeight = "italic",
-#'           printNumbers = "n (percentage)"
+#'           colorScheme ="custom",
+#'           textFace = "italic",
+#'           printNumbers = "count.percentage"
 #'  ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+#'
+#'
+#' grottaBar(
+#'           x,
+#'           groupName = "Group",
+#'           scoreName = "mRS",
+#'           colorScheme = "custom",
+#'           textFace = "italic",
+#'           printNumbers = "count.percentage"
+#' ) + viridis::scale_fill_viridis(discrete = TRUE, direction = -1)
+#'
+#'
+#' grottaBar(x,groupName="Group",
+#'            scoreName = "mRS",
+#'            colorScheme ="custom",
+#'            textFace = "italic",
+#'            textColor = c("black","white"),
+#'            textCut = 5,
+#'            printNumbers = "count.percentage"
+#' ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+#'
+#'
 grottaBar <- function(x,
                       groupName,
                       scoreName,
                       strataName = NULL,
-                      colourScheme = "lowGreen",
+                      colorScheme = "lowGreen",
                       printNumbers = "count",
                       nCol = 1,
                       dir = "v",
                       width = 0.9,
                       textSize = 15,
+                      numberSize = 5,
+                      textFace = "plain",
                       textColor = "black",
                       textCut = 0,
-                      numberSize = 5,
-                      textWeight = "plain",
                       lineSize = 0.5,
-                      returnData = FALSE
+                      returnData = FALSE,
+                      ...
 ){
+
+  # Allow British English spelling of "color"
+  # exists mainly for backwards compatibility
+  # from before arguments were homogenised
+  # to american spelling
+
+  args <- list(...)
+
+  if(!is.null(args$colourScheme)){
+    colorScheme <- args$colourScheme
+  }
+
+  if(!is.null(args$textColour)){
+    textColor <- args$textColour
+  }
+
 
   # This code draws heavily from aosmith's answer to the following question:
   # https://stackoverflow.com/questions/51213169/is-there-an-efficient-way-to-draw-lines-between-different-elements-in-a-stacked
@@ -114,7 +162,6 @@ grottaBar <- function(x,
   # https://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
 
   group <- p_prev <- p <- score <- line_id <- n <- NULL
-
 
 
   x <- as.data.frame(x)
@@ -179,7 +226,7 @@ grottaBar <- function(x,
 
   ggp <- ggplot2::ggplot(x)+
     ggplot2::geom_rect(color="black",
-                       alpha = ifelse(colourScheme=="grayscale",0.5,1),
+                       alpha = ifelse(colorScheme=="grayscale",0.5,1),
                        linewidth=lineSize,
                        ggplot2::aes(xmin=group-width/2,xmax=group+width/2,
                                     ymin=p_prev,ymax=p_prev+p,fill=score))+
@@ -187,13 +234,11 @@ grottaBar <- function(x,
                        ggplot2::aes(x=group,y=p+p_prev,group=line_id))
 
 
-  if(printNumbers=="count"){
-
-
+  if(grepl("^c[o]*[u]*[n]*[t]*$",printNumbers)){
 
     if(is.integer(x$n)){
       ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                     fontface = textWeight,
+                                     fontface = textFace,
                                      ggplot2::aes(x=group,y=p_prev+0.5*p,
                                                   color = as.numeric(score) > textCut,
                                                   label=sprintf("%d",n)))
@@ -203,40 +248,44 @@ grottaBar <- function(x,
       maxDecimal <- max(nchar(x$n-floor(x$n))-2)
 
       ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                     fontface = textWeight,
+                                     fontface = textFace,
                                      ggplot2::aes(x=group,y=p_prev+0.5*p,
                                                   color = as.numeric(score) > textCut,
                                                   label=sprintf(sprintf("%%0.%df",maxDecimal),n)))
     }
 
-  } else if (printNumbers=="proportion"){
+  } else if (grepl("^pr[o]*[p]*[o]*[r]*[t]*[i]*[o]*[n]*$",printNumbers)){
+
     ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                   fontface = textWeight,
+                                   fontface = textFace,
                                    ggplot2::aes(x=group,y=p_prev+0.5*p,
                                                 color = as.numeric(score) > textCut,
                                                 label=sprintf("%0.2f",p)))
-  } else if (printNumbers=="percentage"){
+
+  } else if (grepl("^pe[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*$",printNumbers)){
+
     ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                   fontface = textWeight,
+                                   fontface = textFace,
                                    ggplot2::aes(x=group,y=p_prev+0.5*p,
                                                 color = as.numeric(score) > textCut,
                                                 label=sprintf("%2.2f",100*p)))
-  } else if (printNumbers=="n (percentage)") {
+
+  } else if (grepl("^c[o]*[u]*[n]*[t]*.p[e]*[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*",printNumbers)) {
 
     if(is.integer(x$n)){
       ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                     fontface = textWeight,
+                                     fontface = textFace,
                                      ggplot2::aes(x=group,y=p_prev+0.5*p,
                                                   color = as.numeric(score) > textCut,
                                                   label=sprintf("%d\n(%2.1f%s)",n,100*p,"%")))
     } else {
-      stop("n (percentage) works only with integers")
+      stop("count.percentage works only with integers")
     }
 
 
 
 
-  } else if (printNumbers == "none"){
+  } else if (grepl("^n[o]*[n]*[e]*$",printNumbers)){
 
     # Do nothing if we were told not to print any numbers
 
@@ -244,25 +293,25 @@ grottaBar <- function(x,
     stop("Unrecognised option for printNumbers")
   }
 
-  if(colourScheme=="lowGreen"){
+  if(colorScheme=="lowGreen"){
 
     ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
 
-  } else if(colourScheme=="lowRed"){
+  } else if(colorScheme=="lowRed"){
 
     ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
 
-  } else if  (colourScheme=="grayscale"){
+  } else if  (colorScheme=="grayscale"){
 
     ggp <- ggp + ggplot2::scale_fill_brewer(palette="Greys")
 
-  } else if ( colourScheme =="custom"){
+  } else if ( colorScheme =="custom"){
 
     # Do nothing, assume the user will handle this later.
 
   } else {
 
-    stop("colourScheme not recognised")
+    stop("colorScheme not recognised")
 
   }
 
