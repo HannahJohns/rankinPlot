@@ -24,6 +24,7 @@
 #' @param byBar logical to enable by bar coloring. See example for use case
 #' @param width a number adjusting the width of the lines between bars
 #' @param printNumbers a character string indicating if numbers should be printed for each category.
+#' @param scoreLabel a character string. Used for label with score if printNumbers is "label"
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
 #' @param dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}.
 #' @param textSize a number indicating the size of text labels
@@ -124,8 +125,8 @@
 #' #####
 #'
 #' colorPals <- c("Blues", "Greens")
-#' fills <- do.call(c,lapply(seq_along(colorPals), function(i) {
-#' brewer_pal(pal = colorPals[i])(length(levels(factor(x$score))))
+#' fills <- do.call(c, lapply(seq_along(colorPals), function(i) {
+#'   brewer_pal(pal = colorPals[i])(nrow(x))
 #' }))
 #' grottaBar(x,groupName="Group",
 #'            scoreName = "mRS",
@@ -144,6 +145,7 @@ grottaBar <- function(x,
                       colorScheme = "lowGreen",
                       byBar = FALSE,
                       printNumbers = "count",
+                      scoreLabel="",
                       nCol = 1,
                       dir = "v",
                       width = 0.9,
@@ -318,8 +320,8 @@ grottaBar <- function(x,
                                    fontface = textFace,
                                    ggplot2::aes(x=group,y=p_prev+0.5*p,
                                                 color = as.numeric(score) > textCut,
-                                                label=sprintf("%d%d",
-                                                              scoreName,
+                                                label=sprintf("%s%d",
+                                                              scoreLabel,
                                                               as.numeric(score)-1)))
 
   } else if (grepl("^n[o]*[n]*[e]*$",printNumbers)){
