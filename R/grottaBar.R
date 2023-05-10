@@ -21,6 +21,7 @@
 #' @param scoreName a character string giving outcome (mRS) labels
 #' @param strataName a character string giving the strata variable name
 #' @param colorScheme a character string indicating the colors that should be used by the plot
+#' @param byBar logical to enable by bar coloring. See example for use case
 #' @param width a number adjusting the width of the lines between bars
 #' @param printNumbers a character string indicating if numbers should be printed for each category.
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
@@ -32,6 +33,7 @@
 #' @param textCut Controls when the color of the text changes. The first \code{textCut} categories will use the first color
 #' @param lineSize a number indicating the thickness of lines in the plot
 #' @param returnData a boolean indicating if the data used to create the plot should be returned. For expert users only.
+#' @param legendPosition legend position. Default is "top". Choose "non" to remove.
 #' @param ... additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.
 #'
 #' @details
@@ -119,12 +121,28 @@
 #'            printNumbers = "count.percentage"
 #' ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
 #'
+#' #####
+#'
+#' colorPals <- c("Blues", "Greens")
+#' fills <- do.call(c,lapply(seq_along(colorPals), function(i) {
+#' brewer_pal(pal = colorPals[i])(length(levels(factor(x$score))))
+#' }))
+#' grottaBar(x,groupName="Group",
+#'            scoreName = "mRS",
+#'            colorScheme ="custom",
+#'            textFace = "italic",
+#'            textColor = c("black","white"),
+#'            textCut = 5,
+#'            printNumbers = "label"
+#' ) + scale_fill_manual(values=fill)
+#'
 #'
 grottaBar <- function(x,
                       groupName,
                       scoreName,
                       strataName = NULL,
                       colorScheme = "lowGreen",
+                      byBar = FALSE,
                       printNumbers = "count",
                       nCol = 1,
                       dir = "v",
@@ -136,6 +154,7 @@ grottaBar <- function(x,
                       textCut = 0,
                       lineSize = 0.5,
                       returnData = FALSE,
+                      legendPosition = "top",
                       ...
 ){
 
@@ -224,12 +243,21 @@ grottaBar <- function(x,
   })
   y <- do.call("rbind",y)
 
+  if (byBar) {
+    if (is.null(strataName)) {
+      x$order <- do.call(c, lapply(seq_along(groupLevels), function(i) {
+        paste0(substr(groupLevels[i],1,3),".", levels(x$score))
+      }))
+    }
+  } else
+    x$order <- x$score
+
   ggp <- ggplot2::ggplot(x)+
     ggplot2::geom_rect(color="black",
                        alpha = ifelse(colorScheme=="grayscale",0.5,1),
                        linewidth=lineSize,
                        ggplot2::aes(xmin=group-width/2,xmax=group+width/2,
-                                    ymin=p_prev,ymax=p_prev+p,fill=score))+
+                                    ymin=p_prev,ymax=p_prev+p,fill=order))+
     ggplot2::geom_line(data=y, linewidth=lineSize,
                        ggplot2::aes(x=group,y=p+p_prev,group=line_id))
 
@@ -285,6 +313,15 @@ grottaBar <- function(x,
 
 
 
+  } else if (grepl("^l[a]*[b]*[e]*[l]*",printNumbers)) {
+    ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
+                                   fontface = textFace,
+                                   ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                color = as.numeric(score) > textCut,
+                                                label=sprintf("%d%d",
+                                                              scoreName,
+                                                              as.numeric(score)-1)))
+
   } else if (grepl("^n[o]*[n]*[e]*$",printNumbers)){
 
     # Do nothing if we were told not to print any numbers
@@ -328,7 +365,7 @@ grottaBar <- function(x,
     ggplot2::guides(fill=ggplot2::guide_legend(nrow = 1))+
     ggplot2::theme_bw()+
     ggplot2::theme(axis.title = ggplot2::element_blank(),
-                   legend.position = "top",
+                   legend.position = legendPosition,
                    strip.background = ggplot2::element_rect(fill="white"),
                    panel.grid.major = ggplot2::element_blank(),
                    panel.grid.minor = ggplot2::element_blank(),
