@@ -324,7 +324,7 @@ grottaBar <- function(x,
     ggplot2::scale_x_continuous(breaks = 1:length(groupLevels), labels=groupLevels)+
     ggplot2::scale_y_continuous(labels=scales::percent_format(),expand = ggplot2::expansion(add=0.01))+
     ggplot2::coord_flip(clip="off")+
-    ggplot2::labs(fill="mRS")+
+    ggplot2::labs(fill=scoreName)+
     ggplot2::guides(fill=ggplot2::guide_legend(nrow = 1))+
     ggplot2::theme_bw()+
     ggplot2::theme(axis.title = ggplot2::element_blank(),
