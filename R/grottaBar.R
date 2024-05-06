@@ -232,7 +232,7 @@ grottaBar <- function(x,
                        linewidth=lineSize,
                        ggplot2::aes(xmin=group-width/2,xmax=group+width/2,
                                     ymin=p_prev,ymax=p_prev+p,fill=score))+
-    ggplot2::geom_line(data=y, linewidth=lineSize,
+    ggplot2::geom_line(data=y, color=lineColor,linewidth=lineSize,
                        ggplot2::aes(x=group,y=p+p_prev,group=line_id))
 
 
