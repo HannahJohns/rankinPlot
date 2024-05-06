@@ -31,6 +31,7 @@
 #' @param textColor vector of two colors for text labels
 #' @param textCut Controls when the color of the text changes. The first \code{textCut} categories will use the first color
 #' @param lineSize a number indicating the thickness of lines in the plot
+#' @param lineColor vector color for lines in the plot
 #' @param returnData a boolean indicating if the data used to create the plot should be returned. For expert users only.
 #' @param ... additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.
 #'
@@ -135,6 +136,7 @@ grottaBar <- function(x,
                       textColor = "black",
                       textCut = 0,
                       lineSize = 0.5,
+                      lineColor = "black",
                       returnData = FALSE,
                       ...
 ){
@@ -225,7 +227,7 @@ grottaBar <- function(x,
   y <- do.call("rbind",y)
 
   ggp <- ggplot2::ggplot(x)+
-    ggplot2::geom_rect(color="black",
+    ggplot2::geom_rect(color=lineColor,
                        alpha = ifelse(colorScheme=="grayscale",0.5,1),
                        linewidth=lineSize,
                        ggplot2::aes(xmin=group-width/2,xmax=group+width/2,
