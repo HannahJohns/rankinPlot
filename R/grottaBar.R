@@ -116,6 +116,7 @@
 #'            colorScheme ="custom",
 #'            textFace = "italic",
 #'            textColor = c("black","white"),
+#'            lineColor = "white",
 #'            textCut = 5,
 #'            printNumbers = "count.percentage"
 #' ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
