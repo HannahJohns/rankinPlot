@@ -1,6 +1,26 @@
-library(tidyverse)
+library(rankinPlot)
+
 
 rm(list=ls())
+x <- table(group=alteplase$treat,mrs = alteplase$mRS, time = alteplase$time)
+
+pp_plot(x,
+        groupName =  "group",
+        scoreName = "mrs",
+        strataName = "time"
+)
+
+grottaBar(x,
+        groupName =  "group",
+        scoreName = "mrs",
+        strataName = "time"
+)
+
+
+
+
+library(tidyverse)
+
 
 # Using the same distribution as before
 
@@ -403,6 +423,7 @@ ggplot()+
                            label=sprintf("mRS%s OR %0.2f (%0.2f-%0.2f)",ifelse(i==1,0,sprintf("0-%d",i-1)),
                                          odds_mid, odds_lower, odds_upper)),
              hjust=0, size=3)+
+  geom_abline(linetype="dashed")+
   theme_bw()+
   theme(
     panel.grid = element_blank(),
