@@ -126,8 +126,12 @@ pp_plot <- function(x,
                     groupName,
                     scoreName,
                     strataName = NULL,
+                    panel = T,
 
-                    odds_contour = NULL,
+                    drawPolygon = panel,
+                    drawContour = F,
+                    drawBars = T,
+                    drawCI = T,
 
                     colorScheme = "lowGreen",
                     printNumbers = "count",
@@ -357,9 +361,10 @@ pp_plot <- function(x,
     }))
     tieGrid <- cbind(tieGrid,rbind(dichot_odds,c(rep(NA,3))))
 
-    do.call("rbind",lapply(1:(nrow(tieGrid)-1),function(i){
 
-      print(i)
+
+
+    do.call("rbind",lapply(1:(nrow(tieGrid)-1),function(i){
 
       x_mid <- tieGrid[i,"xmax"]
       y_mid <- oddsCurve(x_mid,tieGrid[i,"or"])
@@ -413,14 +418,18 @@ pp_plot <- function(x,
 
     odds <- as.data.frame(odds)
 
+    # Experimental feature - plot the odds contour lines along each
+    # dichotomous point.
 
-    contour_df_odds <- do.call("rbind",
-                               lapply(odds$odds_mid, function(odds){
-                                 out <- data.frame(r=odds,qc=seq(0,1,length.out=501))
-                                 out$qt <- out$r*out$qc/((out$r-1)*out$qc + 1)
-                                 out
-                               })
-    )
+    # Disabled by default as it needs work.
+
+    # contour_df_odds <- do.call("rbind",
+    #                            lapply(odds$odds_mid, function(odds){
+    #                              out <- data.frame(r=odds,qc=seq(0,1,length.out=501))
+    #                              out$qt <- out$r*out$qc/((out$r-1)*out$qc + 1)
+    #                              out
+    #                            })
+    # )
 
 
     # Win/loss polygons
@@ -456,7 +465,7 @@ pp_plot <- function(x,
     contour_df$strata <- unique(x_strata$strata)
     contour_df_label$strata <- unique(x_strata$strata)
     allPoints$strata <- unique(x_strata$strata)
-    contour_df_odds$strata <- unique(x_strata$strata)
+    # contour_df_odds$strata <- unique(x_strata$strata)
     odds$strata <- unique(x_strata$strata)
 
 
@@ -468,7 +477,7 @@ pp_plot <- function(x,
       contour_df_label = contour_df_label,
 
       allPoints = allPoints,
-      contour_df_odds = contour_df_odds,
+      # contour_df_odds = contour_df_odds,
       odds = odds
     ))
 
@@ -480,74 +489,154 @@ pp_plot <- function(x,
   contour_df <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df}))
   contour_df_label <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df_label}))
   allPoints <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$allPoints}))
-  contour_df_odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df_odds}))
+  # contour_df_odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df_odds}))
   odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$odds}))
 
 
 
   library(ggplot2)
-  ggplot()+
 
-    geom_rect(data=tieGrid,
-              fill="#e8e156",
-              alpha=0.4,
-              color="#999999",
-              aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
-                  group=paste(score_1,score_2)
-              )
-    )+
-    geom_polygon(data=winShape,color="#999999",fill="#71f594", alpha = 0.4,aes(x=x,y=y))+
-    geom_polygon(data=lossShape,color="#999999",fill="#f97194", alpha = 0.4,aes(x=x,y=y))+
-    geom_abline(slope=1,intercept=0, color="dark red",size=1, linetype="dashed")+
+  out <- ggplot()
 
+  # Draw polygons
+  if(drawPolygon){
+    out <- out +
+      geom_rect(data=tieGrid,
+                fill="#e8e156",
+                alpha=0.4,
+                color="#999999",
+                aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
+                    group=paste(score_1,score_2)
+                )
+      )+
+      geom_polygon(data=winShape,color="#999999",fill="#71f594", alpha = 0.4,aes(x=x,y=y))+
+      geom_polygon(data=lossShape,color="#999999",fill="#f97194", alpha = 0.4,aes(x=x,y=y))
+  }
 
-    geom_line(data=contour_df,
-              color="dark gray", linetype="dashed",
-              aes(x=qc,y=qt,group=paste(r)))+
-    geom_text(data=contour_df_label,
-               label.size = NA,
-               label.padding = unit(0, "lines"),
-               hjust=0,vjust=1,size=3.5,
-               aes(x=qc,y=qt,label=sprintf("%0.2f",r)),
-               position=position_dodge()
-    )+
+  out <- out + annotate("segment",x=0,y=0,xend=1,yend=1, color="dark red",size=1, linetype="dashed")
 
-    geom_rect(data=tieGrid,
-              ymin=-0.1,ymax=0,color="black",
-              aes(xmin=xmin,xmax=xmax,fill=factor(score_1)))+
-    geom_rect(data=tieGrid,
-              xmin=-0.1,xmax=0,color="black",
-              aes(ymin=ymin,ymax=ymax,fill=factor(score_2)))+
+  # Draw contour lines
 
+  if(drawContour){
 
-    geom_path(data=allPoints,
-                 aes(x=x,y=y)) +
-
-
-    geom_path(data=contour_df_odds,
-              aes(x=qc,y=qt,group=r), color="dark gray", size=0, linetype="dashed"
-    )+
-    geom_segment(data=odds,
-                 aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i))+
+    out <- out+
+      geom_line(data=contour_df,
+                color="dark gray", linetype="dashed",
+                aes(x=qc,y=qt,group=paste(r)))+
+      geom_text(data=contour_df_label,
+                label.size = NA,
+                label.padding = unit(0, "lines"),
+                hjust=0,vjust=1,size=3.5,
+                aes(x=qc,y=qt,label=sprintf("%0.2f",r)),
+                position=position_dodge()
+      )
 
 
-    geom_point(data=odds,
-               aes(x=x_mid,y=y_mid))+
+    #
+    # out +
+    #   geom_path(data=contour_df_odds,
+    #             aes(x=qc,y=qt,group=r), color="dark gray", linetype="dashed"
+    #   )
 
-    geom_text(data=tieGrid, aes(x=(xmin+xmax)/2,y=-0.05,label=sprintf("%0.2f",xmax-xmin)))+
-    geom_text(data=tieGrid, aes(y=(ymin+ymax)/2,x=-0.05,label=sprintf("%0.2f",ymax-ymin)))+
+  }
+
+  # Draw bars
+  if(drawBars){
+
+    if(panel | length(unique(x$strata))==1){
+
+      out <- out +
+        geom_rect(data=tieGrid,
+                  ymin=-0.1,ymax=0,color="black",
+                  aes(xmin=xmin,xmax=xmax,fill=factor(score_1)))+
+        geom_rect(data=tieGrid,
+                  xmin=-0.1,xmax=0,color="black",
+                  aes(ymin=ymin,ymax=ymax,fill=factor(score_2))) +
+        geom_text(data=tieGrid, aes(x=(xmin+xmax)/2,y=-0.05,label=sprintf("%0.2f",xmax-xmin)))+
+        geom_text(data=tieGrid, aes(y=(ymin+ymax)/2,x=-0.05,label=sprintf("%0.2f",ymax-ymin)))
+
+    } else {
 
 
-    scale_fill_brewer(palette="RdYlGn",direction=-1)+
+      barWidth  <- 0.1
+
+      tieGrid$barMin <- -barWidth * as.numeric(tieGrid$strata)
+      tieGrid$barMax <- tieGrid$barMin+barWidth
 
 
+      out <- out +
+        geom_rect(data=tieGrid,
+                  color="black",
+                  aes(ymin=barMin,ymax=barMax,
+                      xmin=xmin,xmax=xmax,fill=factor(score_1)))+
+        geom_rect(data=tieGrid,
+                  color="black",
+                  aes(xmin=barMin,xmax=barMax,
+                      ymin=ymin,ymax=ymax,fill=factor(score_2)))+
+        geom_text(data=tieGrid, aes(x=(xmin+xmax)/2,y=(barMin + barMax)/2,label=sprintf("%0.2f",xmax-xmin)))+
+        geom_text(data=tieGrid, aes(y=(ymin+ymax)/2,x=(barMin + barMax)/2,label=sprintf("%0.2f",ymax-ymin)))
 
-    labs(x="Control mRS distribution",y="Treatment mRS distribution",fill="mRS")+
+
+      out <- out + geom_text(data =  unique(tieGrid[,c("strata","barMin","barMax")]),
+                             aes(label = strata,
+                                 color = strata,
+                                 x=(barMin + barMax)/2 ,
+                                 y=(barMin + barMax)/2)
+                             )
+
+
+    }
+
+    out <- out + scale_fill_brewer(palette="RdYlGn",direction=-1)
+
+  }
+
+
+  # Draw points
+
+  if(panel | length(unique(x$strata))==1){
+
+    out <- out +
+      geom_path(data=allPoints,
+                aes(x=x,y=y))+
+      geom_point(data=odds,
+                 aes(x=x_mid,y=y_mid))
+
+    # Draw confidence intervals around the points
+    if(drawCI)
+      out <- out+
+      geom_segment(data=odds,
+                   aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i))
+
+  } else {
+
+    out <- out +
+      geom_path(data=allPoints,
+                aes(x=x,y=y,color=strata))+
+      geom_point(data=odds,
+                 aes(x=x_mid,y=y_mid,color=strata))
+
+    # Draw confidence intervals around the points
+    if(drawCI)
+      out <- out+
+        geom_segment(data=odds,
+                     aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i,color=strata))
+
+    out <- out + scale_color_brewer(palette="Set1")
+  }
+
+  out <- out +
+    labs(x="Control mRS distribution",y="Treatment mRS distribution",fill="mRS") +
     theme_bw()+
     theme(
       panel.grid = element_blank(),
       aspect.ratio = 1
-    ) + facet_wrap(~strata)
+    )
 
+  if(panel & length(unique(x$strata)) > 1){
+    out <- out + facet_wrap(~strata)
+  }
+
+  out
 
 }
