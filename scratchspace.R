@@ -1,50 +1,23 @@
 library(rankinPlot)
 
-
 rm(list=ls())
 x <- table(group=alteplase$treat,mrs = alteplase$mRS, time = alteplase$time)
-
-if(TRUE){
-  groupName =  "group"
-  scoreName = "mrs"
-  strataName = "time"
-
-  panel = F
-
-  drawPolygon = panel
-  drawContour = F
-
-  drawBars = T
-  drawCI = F
-
-  colorScheme = "lowGreen"
-  printNumbers = "count"
-  nCol = 1
-  dir = "v"
-  textSize = 15
-  numberSize = 5
-  textFace = "plain"
-  textColor = "black"
-  textCut = 0
-  lineSize = 0.5
-  lineColor = "black"
-  drawLines = TRUE
-  returnData = FALSE
-}
-
 
 
 
 pp_plot(x,
         groupName =  "group",
         scoreName = "mrs",
-        strataName = "time"
+        strataName = "time",
+        confint=F,
+        panel=F
 )
 
 grottaBar(x,
         groupName =  "group",
         scoreName = "mrs",
-        strataName = "time"
+        strataName = "time",
+        colorScheme = "custom"
 )
 
 

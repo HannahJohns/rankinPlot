@@ -20,7 +20,7 @@
 #' @param groupName a character string giving the name of the group varialble
 #' @param scoreName a character string giving outcome (mRS) labels
 #' @param strataName a character string giving the strata variable name
-#' @param colorScheme a character string indicating the colors that should be used by the plot
+#' @param bar.colorScheme a character string indicating the colors that should be used by the plot
 #' @param printNumbers a character string indicating if numbers should be printed for each category.
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
 #' @param dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}.
@@ -126,25 +126,30 @@ pp_plot <- function(x,
                     groupName,
                     scoreName,
                     strataName = NULL,
+
                     panel = T,
+                    panel.nCol = 1,
+                    panel.dir = "v",
 
                     drawPolygon = panel,
-                    drawContour = F,
-                    drawBars = T,
-                    drawCI = T,
 
-                    colorScheme = "lowGreen",
-                    printNumbers = "count",
-                    nCol = 1,
-                    dir = "v",
-                    textSize = 15,
-                    numberSize = 5,
-                    textFace = "plain",
-                    textColor = "black",
-                    textCut = 0,
-                    lineSize = 0.5,
-                    lineColor = "black",
-                    drawLines = TRUE,
+                    drawContour = F,
+
+                    confint = T,
+                    confint.level = 0.95,
+
+                    bar = T,
+                    bar.colorScheme = "lowGreen",
+                    bar.width = 0.1,
+                    bar.lineColor = "black",
+                    bar.linewidth =  0.5,
+
+                    bar.text = "count",
+                    bar.text.size = 5,
+                    bar.text.color = "black",
+                    bar.text.cut = 0,
+                    bar.text.face = "plain",
+
                     returnData = FALSE,
                     ...
 ){
@@ -277,8 +282,9 @@ pp_plot <- function(x,
     xlabel <- data.frame(labels=scoreLevels, xpos = unique(apply(posGrid[,c("xmin","xmax")],1,mean)))
     ylabel <- data.frame(labels=scoreLevels, ypos = unique(apply(posGrid[,c("ymin","ymax")],1,mean)))
 
-    splitprop <- outer(p0,p1)
-    splitProp <- sum(splitprop[lower.tri(splitprop)])/(sum(splitprop[lower.tri(splitprop)])+sum(splitprop[upper.tri(splitprop)]))
+    # splitprop <- outer(p0,p1)
+    # splitProp <- sum(splitprop[lower.tri(splitprop)])/(sum(splitprop[lower.tri(splitprop)])+sum(splitprop[upper.tri(splitprop)]))
+    splitProp <- 0.5
 
     tieGrid <- posGrid[which(posGrid$score_1==posGrid$score_2),]
 
@@ -288,7 +294,7 @@ pp_plot <- function(x,
       dy <- tieGrid[i,"ymax"]-tieGrid[i,"ymin"]
 
 
-      splitprop <- outer(p0,p1)
+      # splitprop <- outer(p0,p1)
 
       # what proportion of the split ties should be considered wins vs losses
       # splitProp <- sum(splitprop[lower.tri(splitprop)])/(sum(splitprop[lower.tri(splitprop)])+sum(splitprop[upper.tri(splitprop)]))
@@ -353,15 +359,13 @@ pp_plot <- function(x,
         )
       )
 
-      out <- c(fisher.test(this_xtab)$estimate, fisher.test(this_xtab)$conf.int)
+      out <- c(fisher.test(this_xtab)$estimate, fisher.test(this_xtab, conf.level = confint.level)$conf.int)
 
       names(out) <- c("or","lower","upper")
       out
 
     }))
     tieGrid <- cbind(tieGrid,rbind(dichot_odds,c(rep(NA,3))))
-
-
 
 
     do.call("rbind",lapply(1:(nrow(tieGrid)-1),function(i){
@@ -541,55 +545,92 @@ pp_plot <- function(x,
   }
 
   # Draw bars
-  if(drawBars){
+  if(bar){
+
+    # bar.text = "count",
+    # bar.text.size = 5,
+    # bar.text.color = "black",
+    # bar.text.cut = 0,
+    # bar.text.face = "plain",
 
     if(panel | length(unique(x$strata))==1){
 
-      out <- out +
-        geom_rect(data=tieGrid,
-                  ymin=-0.1,ymax=0,color="black",
-                  aes(xmin=xmin,xmax=xmax,fill=factor(score_1)))+
-        geom_rect(data=tieGrid,
-                  xmin=-0.1,xmax=0,color="black",
-                  aes(ymin=ymin,ymax=ymax,fill=factor(score_2))) +
-        geom_text(data=tieGrid, aes(x=(xmin+xmax)/2,y=-0.05,label=sprintf("%0.2f",xmax-xmin)))+
-        geom_text(data=tieGrid, aes(y=(ymin+ymax)/2,x=-0.05,label=sprintf("%0.2f",ymax-ymin)))
+      tieGrid$barMin <- -bar.width
+      tieGrid$barMax <- 0
 
     } else {
 
+      tieGrid$barMin <- -bar.width * as.numeric(tieGrid$strata)
+      tieGrid$barMax <- tieGrid$barMin+bar.width
 
-      barWidth  <- 0.1
-
-      tieGrid$barMin <- -barWidth * as.numeric(tieGrid$strata)
-      tieGrid$barMax <- tieGrid$barMin+barWidth
-
-
-      out <- out +
-        geom_rect(data=tieGrid,
-                  color="black",
-                  aes(ymin=barMin,ymax=barMax,
-                      xmin=xmin,xmax=xmax,fill=factor(score_1)))+
-        geom_rect(data=tieGrid,
-                  color="black",
-                  aes(xmin=barMin,xmax=barMax,
-                      ymin=ymin,ymax=ymax,fill=factor(score_2)))+
-        geom_text(data=tieGrid, aes(x=(xmin+xmax)/2,y=(barMin + barMax)/2,label=sprintf("%0.2f",xmax-xmin)))+
-        geom_text(data=tieGrid, aes(y=(ymin+ymax)/2,x=(barMin + barMax)/2,label=sprintf("%0.2f",ymax-ymin)))
+    }
 
 
+    out <- out +
+      geom_rect(data=tieGrid,
+                color=bar.lineColor,
+                linewidth = bar.linewidth,
+                aes(ymin=barMin,ymax=barMax,
+                    xmin=xmin,xmax=xmax,fill=factor(score_1)))+
+      geom_rect(data=tieGrid,
+                color=bar.lineColor,
+                linewidth = bar.linewidth,
+                aes(xmin=barMin,xmax=barMax,
+                    ymin=ymin,ymax=ymax,fill=factor(score_2)))
+
+    browser()
+
+    out <- out +
+      geom_text(data=tieGrid, aes(x=(xmin+xmax)/2,y=(barMin + barMax)/2,label=sprintf("%0.2f",xmax-xmin)))+
+      geom_text(data=tieGrid, aes(y=(ymin+ymax)/2,x=(barMin + barMax)/2,label=sprintf("%0.2f",ymax-ymin)))
+
+
+    # Add strata label if needed.
+    # NOTE: We don't worry about the scale for strata color here - it's set later.
+
+    if(!panel | length(unique(x$strata))>1){
       out <- out + geom_text(data =  unique(tieGrid[,c("strata","barMin","barMax")]),
                              aes(label = strata,
                                  color = strata,
                                  x=(barMin + barMax)/2 ,
                                  y=(barMin + barMax)/2)
-                             )
-
-
+      )
     }
 
-    out <- out + scale_fill_brewer(palette="RdYlGn",direction=-1)
 
+
+    if("ScaleDiscrete" %in% class(bar.colorScheme)){
+
+      out <- out + bar.colorScheme
+
+    } else {
+
+      if(bar.colorScheme=="lowGreen"){
+
+        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
+
+      } else if(bar.colorScheme=="lowRed"){
+
+        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
+
+      } else if  (bar.colorScheme=="grayscale"){
+
+        out <- out + ggplot2::scale_fill_brewer(palette="Greys")
+
+      } else if (bar.colorScheme =="custom"){
+
+        # Do nothing, assume the user will handle this later.
+
+      } else {
+
+        stop("colorScheme not recognised")
+
+      }
+
+    }
   }
+
+
 
 
   # Draw points
@@ -603,10 +644,11 @@ pp_plot <- function(x,
                  aes(x=x_mid,y=y_mid))
 
     # Draw confidence intervals around the points
-    if(drawCI)
+    if(confint){
       out <- out+
-      geom_segment(data=odds,
-                   aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i))
+        geom_segment(data=odds,
+                     aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i))
+    }
 
   } else {
 
@@ -617,10 +659,19 @@ pp_plot <- function(x,
                  aes(x=x_mid,y=y_mid,color=strata))
 
     # Draw confidence intervals around the points
-    if(drawCI)
+    if(confint){
       out <- out+
         geom_segment(data=odds,
                      aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i,color=strata))
+    }
+
+    # Color Scale is set here - it's used both for this and for bars above,
+    # assuming bars were used.
+
+
+
+
+
 
     out <- out + scale_color_brewer(palette="Set1")
   }
