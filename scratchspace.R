@@ -1,7 +1,36 @@
 library(rankinPlot)
 
 rm(list=ls())
-x <- table(group=alteplase$treat,mrs = alteplase$mRS, time = alteplase$time)
+
+# Set default colours of bars to be distinct - blue
+
+
+# Factor levels are breaking things at the moment
+this_data <- alteplase
+this_data$mRS <- factor(this_data$mRS, levels=1:7, labels = 0:6)
+# this_data$mRS <- factor(this_data$mRS, levels=rev(levels(this_data$mRS)))
+x <- table(group=this_data$treat,mrs = this_data$mRS, time = alteplase$time)
+
+
+x <- table(group=this_data$treat,mrs = this_data$mRS,time=floor((as.numeric(this_data$time)-1)/2))
+
+
+pp_plot(x,
+        groupName =  "group",
+        scoreName = "mrs",
+        strataName = "time",
+        bar = T,
+        bar.colorScheme = "lowGreen",
+        bar.text = "count",
+        # bar.text.color = c(rep("black",4),rep("white",3)),
+        confint=F,
+        confint.angle = "fixed",
+        panel=F,
+        # drawContour = T,
+        drawPolygon = F,
+        strata.linetype = scale_linetype(),
+        strata.color = "black" # This causes things to break
+)
 
 
 
@@ -9,16 +38,51 @@ pp_plot(x,
         groupName =  "group",
         scoreName = "mrs",
         strataName = "time",
-        confint=F,
-        panel=F
+        bar.text = "count",
+        confint=T, strata.color = "black"
 )
+
+
+if(TRUE){
+  groupName =  "group"
+  scoreName = "mrs"
+  strataName = NULL #"time"
+
+  panel = T
+  panel.nCol = 1
+  panel.dir = "v"
+
+  drawPolygon = panel
+
+  drawContour = F
+
+  confint = T
+  confint.level = 0.95
+  confint.angle = "fixed"
+
+  bar = T
+  bar.colorScheme = "lowGreen"
+  bar.width = 0.1
+  bar.lineColor = "black"
+  bar.linewidth =  0.5
+
+  bar.text = "count"
+  bar.text.size = 5
+  bar.text.color = c(rep("black",4),rep("white",3))
+  bar.text.cut = 0
+  bar.text.face = "plain"
+
+
+  strata.color = "black"
+}
+
 
 grottaBar(x,
         groupName =  "group",
         scoreName = "mrs",
-        strataName = "time",
-        colorScheme = "custom"
+        strataName = "time"
 )
+
 
 
 library(tidyverse)

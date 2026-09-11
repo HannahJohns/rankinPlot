@@ -136,6 +136,7 @@ pp_plot <- function(x,
                     drawContour = F,
 
                     confint = T,
+                    confint.angle = "fixed",
                     confint.level = 0.95,
 
                     bar = T,
@@ -147,13 +148,14 @@ pp_plot <- function(x,
                     bar.text = "count",
                     bar.text.size = 5,
                     bar.text.color = "black",
-                    bar.text.cut = 0,
                     bar.text.face = "plain",
 
-                    returnData = FALSE,
+                    strata.color = NULL,
+                    strata.text.size = bar.text.size,
+                    strata.linetype = "solid",
+
                     ...
 ){
-
 
   # Allow British English spelling of "color"
 
@@ -182,12 +184,27 @@ pp_plot <- function(x,
     x$strata <- factor(x$strata)
   }
 
-
   strataLevels <- levels(x$strata)
   scoreLevels <- levels(x$score)
 
+
+  # Get default options
+
+  if(is.null(strata.color)){
+    if(length(strataLevels)==1){
+      strata.color <- "black"
+    } else {
+      strata.color <- ggplot2::scale_color_brewer(palette="Set1")
+    }
+  }
+
+
+
+
+
   # Get proportions. This has to be done by strata.
   x <- by(x,x$strata,function(x){
+
     x$p <- x$n
 
     for(i in unique(x$group)) x[x$group == i,"p"] <- x[x$group == i,"p"]/sum(x[x$group == i,"p"])
@@ -210,8 +227,10 @@ pp_plot <- function(x,
   x$group <- as.numeric(x$group)
 
   # We need the data in wide format
+
   x <- do.call("rbind",by(x,paste(x$strata,x$score), function(x){
-    data.frame(strata=unique(x$strata), score = unique(x$score),
+    data.frame(strata=unique(x$strata),
+               score = unique(x$score),
                n_1 = x$n[x$group==1],
                p_1 = x$p[x$group==1],
                p_prev_1 = x$p_prev[x$group==1],
@@ -222,6 +241,12 @@ pp_plot <- function(x,
   }))
   x$strata <- factor(x$strata,strataLevels)
 
+  # The above busts the ordering of factors because it's looping over
+  # a character concatenation of strata and score. This causes problems later,
+  # because the code below assumes that x is ordered according to factors.
+  # Correcting the order after the fact is the simplest fix.
+  x <- x[order(x$score),]
+
   rownames(x) <- NULL
 
   # Get cumulative probability for treatment group assuming
@@ -230,14 +255,14 @@ pp_plot <- function(x,
   oddsCurve_x <- function(x,r) r/((r-1)*x+1)^2 # First derivative with respect to x
 
 
-  x_strata <- x[x$strata==x$strata[1],]
+  # x_strata <- x[x$strata==x$strata[1],]
   results_by_strata <- by(x,x$strata,function(x_strata){
 
     p0 <- x_strata$p_1
     p1 <- x_strata$p_2
 
-    posx <- cbind(score_1 = x_strata$score, xmin=cumsum(p0)-p0,xmax=cumsum(p0))
-    posy <- cbind(score_2 = x_strata$score, ymin=cumsum(p1)-p1,ymax=cumsum(p1))
+    posx <- cbind(score_1 = x_strata$score, xcount=x_strata$n_1, xmin=cumsum(p0)-p0,xmax=cumsum(p0))
+    posy <- cbind(score_2 = x_strata$score, ycount=x_strata$n_2, ymin=cumsum(p1)-p1,ymax=cumsum(p1))
 
     posx <- lapply(1:nrow(posx),function(i){posx[i,]})
     posy <- lapply(1:nrow(posy),function(i){posy[i,]})
@@ -380,7 +405,13 @@ pp_plot <- function(x,
 
       x_lower <- uniroot(function(x_lower){
 
-        m <- -1/oddsCurve_x(x_mid,tieGrid[i,"or"])
+        if(confint.angle == "proportional.odds"){
+          m <- -1/oddsCurve_x(x_mid,tieGrid[i,"or"])
+        } else if(confint.angle == "fixed"){
+          m <- -1
+        } else {
+          stop("confint.angle should be proportional.odds or fixed")
+        }
 
         normalLineVal <- oddsCurve(x_mid,tieGrid[i,"or"]) + m*(x_lower-x_mid)
 
@@ -394,7 +425,13 @@ pp_plot <- function(x,
 
       x_upper <- uniroot(function(x_upper){
 
-        m <- -1/oddsCurve_x(x_mid,tieGrid[i,"or"])
+        if(confint.angle == "proportional.odds"){
+          m <- -1/oddsCurve_x(x_mid,tieGrid[i,"or"])
+        } else if(confint.angle == "fixed"){
+          m <- -1
+        } else {
+          stop("confint.angle should be proportional.odds or fixed")
+        }
 
         normalLineVal <- oddsCurve(x_mid,tieGrid[i,"or"]) + m*(x_upper-x_mid)
 
@@ -500,38 +537,38 @@ pp_plot <- function(x,
 
   library(ggplot2)
 
-  out <- ggplot()
+  out <- ggplot2::ggplot()
 
   # Draw polygons
   if(drawPolygon){
     out <- out +
-      geom_rect(data=tieGrid,
+      ggplot2::geom_rect(data=tieGrid,
                 fill="#e8e156",
                 alpha=0.4,
                 color="#999999",
-                aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
+                ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
                     group=paste(score_1,score_2)
                 )
       )+
-      geom_polygon(data=winShape,color="#999999",fill="#71f594", alpha = 0.4,aes(x=x,y=y))+
-      geom_polygon(data=lossShape,color="#999999",fill="#f97194", alpha = 0.4,aes(x=x,y=y))
+      ggplot2::geom_polygon(data=winShape,color="#999999",fill="#71f594", alpha = 0.4,aes(x=x,y=y))+
+      ggplot2::geom_polygon(data=lossShape,color="#999999",fill="#f97194", alpha = 0.4,aes(x=x,y=y))
   }
 
-  out <- out + annotate("segment",x=0,y=0,xend=1,yend=1, color="dark red",size=1, linetype="dashed")
+  out <- out + ggplot2::annotate("segment",x=0,y=0,xend=1,yend=1, color="dark red",size=1, linetype="dashed")
 
   # Draw contour lines
 
   if(drawContour){
 
     out <- out+
-      geom_line(data=contour_df,
+      ggplot2::geom_line(data=contour_df,
                 color="dark gray", linetype="dashed",
-                aes(x=qc,y=qt,group=paste(r)))+
-      geom_text(data=contour_df_label,
+                ggplot2::aes(x=qc,y=qt,group=paste(r)))+
+      ggplot2::geom_label(data=contour_df_label,
                 label.size = NA,
                 label.padding = unit(0, "lines"),
                 hjust=0,vjust=1,size=3.5,
-                aes(x=qc,y=qt,label=sprintf("%0.2f",r)),
+                ggplot2::aes(x=qc,y=qt,label=sprintf("%0.2f",r)),
                 position=position_dodge()
       )
 
@@ -547,12 +584,6 @@ pp_plot <- function(x,
   # Draw bars
   if(bar){
 
-    # bar.text = "count",
-    # bar.text.size = 5,
-    # bar.text.color = "black",
-    # bar.text.cut = 0,
-    # bar.text.face = "plain",
-
     if(panel | length(unique(x$strata))==1){
 
       tieGrid$barMin <- -bar.width
@@ -567,37 +598,133 @@ pp_plot <- function(x,
 
 
     out <- out +
-      geom_rect(data=tieGrid,
-                color=bar.lineColor,
-                linewidth = bar.linewidth,
-                aes(ymin=barMin,ymax=barMax,
-                    xmin=xmin,xmax=xmax,fill=factor(score_1)))+
-      geom_rect(data=tieGrid,
-                color=bar.lineColor,
-                linewidth = bar.linewidth,
-                aes(xmin=barMin,xmax=barMax,
-                    ymin=ymin,ymax=ymax,fill=factor(score_2)))
-
-    browser()
-
-    out <- out +
-      geom_text(data=tieGrid, aes(x=(xmin+xmax)/2,y=(barMin + barMax)/2,label=sprintf("%0.2f",xmax-xmin)))+
-      geom_text(data=tieGrid, aes(y=(ymin+ymax)/2,x=(barMin + barMax)/2,label=sprintf("%0.2f",ymax-ymin)))
+      ggplot2::geom_rect(data=tieGrid,
+                         color=bar.lineColor,
+                         linewidth = bar.linewidth,
+                         ggplot2::aes(ymin=barMin,ymax=barMax,
+                                      xmin=xmin,xmax=xmax,fill=factor(score_1)))+
+      ggplot2::geom_rect(data=tieGrid,
+                         color=bar.lineColor,
+                         linewidth = bar.linewidth,
+                         ggplot2::aes(xmin=barMin,xmax=barMax,
+                                      ymin=ymin,ymax=ymax,fill=factor(score_2)))
 
 
-    # Add strata label if needed.
-    # NOTE: We don't worry about the scale for strata color here - it's set later.
 
-    if(!panel | length(unique(x$strata))>1){
-      out <- out + geom_text(data =  unique(tieGrid[,c("strata","barMin","barMax")]),
-                             aes(label = strata,
-                                 color = strata,
-                                 x=(barMin + barMax)/2 ,
-                                 y=(barMin + barMax)/2)
-      )
+
+    # Because colour aesthetic is reserved for strata in this plot,
+    # we need to draw different grobs for different text colours.
+    # Hadley Wickham would likely disapprove.
+
+    for(this_color in unique(bar.text.color)){
+
+      this_tieGrid=tieGrid[which(tieGrid$score_1 %in% scoreLevels[bar.text.color == this_color]),]
+
+
+      if(grepl("^c[o]*[u]*[n]*[t]*$",bar.text)){
+
+        out <- out +
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(x=(xmin+xmax)/2,
+                                          y=(barMin + barMax)/2,
+                                          label=sprintf("%d",xcount)
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )+
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(y=(ymin+ymax)/2,
+                                          x=(barMin + barMax)/2,
+                                          label=sprintf("%d",ycount)
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )
+
+      } else if (grepl("^pr[o]*[p]*[o]*[r]*[t]*[i]*[o]*[n]*$",bar.text)){
+
+
+        out <- out +
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(x=(xmin+xmax)/2,
+                                          y=(barMin + barMax)/2,
+                                          label=sprintf("%0.2f",xmax-xmin)
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )+
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(y=(ymin+ymax)/2,
+                                          x=(barMin + barMax)/2,
+                                          label=sprintf("%0.2f",ymax-ymin)
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )
+
+
+      } else if (grepl("^pe[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*$",bar.text)){
+
+
+        out <- out +
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(x=(xmin+xmax)/2,
+                                          y=(barMin + barMax)/2,
+                                          label=sprintf("%2.2f%%",100*(xmax-xmin))
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )+
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(y=(ymin+ymax)/2,
+                                          x=(barMin + barMax)/2,
+                                          label=sprintf("%2.2f%%",100*(ymax-ymin))
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )
+
+      } else if (grepl("^c[o]*[u]*[n]*[t]*.p[e]*[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*",bar.text)) {
+
+        out <- out +
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(x=(xmin+xmax)/2,
+                                          y=(barMin + barMax)/2,
+                                          label=sprintf("%d\n(%2.2f%%)",xcount,100*(xmax-xmin))
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )+
+          ggplot2::geom_text(data=this_tieGrid,
+                             ggplot2::aes(y=(ymin+ymax)/2,
+                                          x=(barMin + barMax)/2,
+                                          label=sprintf("%d\n(%2.2f%%)",ycount,100*(ymax-ymin))
+                             ),
+                             size = bar.text.size,
+                             color = this_color,
+                             fontface = bar.text.face
+          )
+
+      } else if (grepl("^n[o]*[n]*[e]*$",bar.text)){
+
+        # Do nothing if we were told not to print any numbers
+
+      } else {
+        stop("Unrecognised option for printNumbers")
+      }
+
     }
 
 
+    # Colour schemes for the bars
+    # TODO: The default for this should be blue gradient.
 
     if("ScaleDiscrete" %in% class(bar.colorScheme)){
 
@@ -613,7 +740,7 @@ pp_plot <- function(x,
 
         out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
 
-      } else if  (bar.colorScheme=="grayscale"){
+      } else if  (bar.colorScheme %in% c("grayscale","greyscale")){
 
         out <- out + ggplot2::scale_fill_brewer(palette="Greys")
 
@@ -628,66 +755,196 @@ pp_plot <- function(x,
       }
 
     }
+
+
+    # Add strata labels for bars if needed.
+    # Only do it if we're not panelling (where it's shown in the facet label)
+    # AND there's more than one stratum.
+
+    if(!panel & length(unique(x$strata))>1){
+
+      stop("This is old and needs replaced with the same structure we use for the main plot.")
+
+
+      if(length(strata.linetype) == 1){
+
+        # Linetype doesn't vary, strata should not be an aesthetic mapping for it
+
+        out <- out + ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
+                                           ggplot2::aes(label = strata,
+                                                        color = strata,
+                                                        x=(barMin + barMax)/2 ,
+                                                        y=(barMin + barMax)/2,
+                                                        yend=(barMin + barMax)/2,
+                                           ),
+                                           xend=0,
+                                           linetype=strata.linetype
+        ) +
+          ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
+                                ggplot2::aes(label = strata,
+                                             color = strata,
+                                             x=(barMin + barMax)/2 ,
+                                             xend=(barMin + barMax)/2 ,
+                                             y=(barMin + barMax)/2
+                                ),
+                                yend=0,
+                                linetype=strata.linetype
+          )
+
+
+      } else if("ScaleDiscrete" %in% class(strata.linetype)) {
+
+        # Linetype is a scale and should vary
+        out <- out + ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
+                                           ggplot2::aes(
+                                             color = strata,
+                                             linetype = strata,
+                                             x=(barMin + barMax)/2 ,
+                                             y=(barMin + barMax)/2,
+                                             yend=(barMin + barMax)/2,
+                                           ),
+                                           xend=0
+        ) +
+          ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
+                                ggplot2::aes(
+                                  color = strata,
+                                  linetype = strata,
+                                  x=(barMin + barMax)/2 ,
+                                  xend=(barMin + barMax)/2 ,
+                                  y=(barMin + barMax)/2
+                                ),
+                                yend=0
+          )
+
+      } else {
+        stop("strata.linetype not recognised")
+      }
+
+
+      out <- out + ggplot2::geom_label(data =  unique(tieGrid[,c("strata","barMin","barMax")]),
+                                       ggplot2::aes(label = strata,
+                                                    color = strata,
+                                                    x=(barMin + barMax)/2 ,
+                                                    y=(barMin + barMax)/2
+                                       ),
+                                       label.size=NA,
+                                       size=strata.text.size,
+                                       fill="white"
+      )
+
+    } # End if we're adding stratum labels
+
   }
-
-
-
 
   # Draw points
 
-  if(panel | length(unique(x$strata))==1){
+  # This whole section is stupid, but it prevents combinatorial
+  # explosion from what inputs are provided so we're doing it anyway.
 
-    out <- out +
-      geom_path(data=allPoints,
-                aes(x=x,y=y))+
-      geom_point(data=odds,
-                 aes(x=x_mid,y=y_mid))
+  # Construct the aesthetic mapping algorithmically
+  # so we can inject the options we need
 
-    # Draw confidence intervals around the points
-    if(confint){
-      out <- out+
-        geom_segment(data=odds,
-                     aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i))
-    }
+  aes_wrapper <- function(...){ggplot2::aes(...)}
 
-  } else {
-
-    out <- out +
-      geom_path(data=allPoints,
-                aes(x=x,y=y,color=strata))+
-      geom_point(data=odds,
-                 aes(x=x_mid,y=y_mid,color=strata))
-
-    # Draw confidence intervals around the points
-    if(confint){
-      out <- out+
-        geom_segment(data=odds,
-                     aes(x=x_lower,y=y_lower,xend=x_upper,yend=y_upper, group=i,color=strata))
-    }
-
-    # Color Scale is set here - it's used both for this and for bars above,
-    # assuming bars were used.
+  path_aes <- list(x=rlang::sym("x"),
+                   y=rlang::sym("y"))
+  path_constant <- list()
 
 
+  point_aes <- list(x=rlang::sym("x_mid"),
+                   y=rlang::sym("y_mid"))
+  point_constant <- list()
 
+  confint_aes <- list(x=rlang::sym("x_lower"),
+                      y=rlang::sym("y_lower"),
+                      xend=rlang::sym("x_upper"),
+                      yend=rlang::sym("y_upper"),
+                      group=rlang::sym("i"))
+  confint_constant <- list()
 
+  # Did we specify a type for the line?
+  # Is it an aesthetic mapping?
+  if(length(strata.linetype) == 1){
 
+    path_constant <- c(path_constant,linetype=strata.linetype)
+    # point_constant <- c(point_constant,linetype=strata.linetype)
+    # confint_constant <- c(confint_constant,linetype=strata.linetype)
 
-    out <- out + scale_color_brewer(palette="Set1")
+  } else if("ScaleDiscrete" %in% class(strata.linetype)){
+
+    path_aes <- c(path_aes,linetype=rlang::sym("strata"))
+    # point_aes <- c(point_aes,linetype=rlang::sym("strata"))
+    # confint_aes <- c(confint_aes,linetype=rlang::sym("strata"))
   }
 
+
+  # Do the same with color
+  # Did we specify a type for the line?
+  # Is it an aesthetic mapping?
+  if(length(strata.color) == 1){
+
+    path_constant <- c(path_constant,color=strata.color)
+    point_constant <- c(point_constant,color=strata.color)
+    confint_constant <- c(confint_constant,color=strata.color)
+
+  } else if("ScaleDiscrete" %in% class(strata.color)){
+
+    path_aes <- c(path_aes,color=rlang::sym("strata"))
+    point_aes <- c(point_aes,color=rlang::sym("strata"))
+    confint_aes <- c(confint_aes,color=rlang::sym("strata"))
+  }
+
+  # This is even harder to read than I thought it would be.
+
+  # Convert the lists of aesthetic mappings into aes() mappings.
+  # so they're in the correct format for ggplot2
+  path_aes <- do.call(aes_wrapper,path_aes)
+  point_aes <- do.call(aes_wrapper,point_aes)
+  confint_aes <- do.call(aes_wrapper,confint_aes)
+
+  # Then we need to repeat this trick for each geom_object with each constant
+  # aesthetic value
+  # browser()
+
+  out <- out + do.call(function(...){ggplot2::geom_path(data=allPoints,path_aes,...)},
+                  path_constant
+              ) +
+              do.call(function(...){ggplot2::geom_point(data=odds,point_aes,...)},
+                      point_constant
+              )
+
+  # Draw confidence intervals around the points
+  if(confint){
+    out <- out+ do.call(function(...){ggplot2::geom_segment(data=odds,confint_aes,...)},
+                  confint_constant
+      )
+  }
+
+
+  # Add scales if they were instructed.
+  if("ScaleDiscrete" %in% class(strata.color)){
+    out <- out + strata.color
+  }
+
+
+  if("ScaleDiscrete" %in% class(strata.linetype)){
+    out <- out + strata.linetype
+  }
+
+
+  # TODO: These should be given as options
+
   out <- out +
-    labs(x="Control mRS distribution",y="Treatment mRS distribution",fill="mRS") +
-    theme_bw()+
-    theme(
-      panel.grid = element_blank(),
+    ggplot2::labs(x="Control distribution",y="Treatment distribution",fill=strataName) +
+    ggplot2::theme_bw()+
+    ggplot2::theme(
+      panel.grid = ggplot2::element_blank(),
       aspect.ratio = 1
     )
 
   if(panel & length(unique(x$strata)) > 1){
-    out <- out + facet_wrap(~strata)
+    out <- out + ggplot2::facet_wrap(~strata)
   }
 
   out
-
 }
