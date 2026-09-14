@@ -12,7 +12,42 @@ this_data$mRS <- factor(this_data$mRS, levels=1:7, labels = 0:6)
 x <- table(group=this_data$treat,mrs = this_data$mRS, time = alteplase$time)
 
 
-x <- table(group=this_data$treat,mrs = this_data$mRS,time=floor((as.numeric(this_data$time)-1)/2))
+x <- table(group=this_data$treat,
+           mrs = this_data$mRS,
+           time=floor((as.numeric(this_data$time)-1)/2))
+
+df <- alteplase
+df$mRS <- df$mRS -1
+x <- table(mRS=df$mRS,
+           Group=df$treat,
+           Time=df$time)
+
+pp_plot(x,
+        groupName =  "Group",
+        scoreName = "mRS",
+        strataName = "Time",
+        panel = T,
+        polygon.alpha = 0.3,
+        line.color ="black"
+)
+
+pp_plot(x,
+        groupName =  "Group",
+        scoreName = "mRS",
+        strataName = "Time",
+        panel = F,
+        confint = F,
+        line.linetype = "solid"
+)
+
+
+
+grottaBar(x,
+        groupName =  "Group",
+        scoreName = "mRS",
+        strataName = "Time",
+        textColor = c("black")
+)
 
 
 pp_plot(x,
@@ -20,18 +55,17 @@ pp_plot(x,
         scoreName = "mrs",
         strataName = "time",
         bar = T,
-        bar.colorScheme = "lowGreen",
+        # bar.colorScheme = "lowGreen",
         bar.text = "count",
         # bar.text.color = c(rep("black",4),rep("white",3)),
-        confint=F,
+        confint=T,
         confint.angle = "fixed",
         panel=F,
         # drawContour = T,
-        drawPolygon = F,
-        strata.linetype = scale_linetype(),
-        strata.color = "black" # This causes things to break
+        drawPolygon = F
+        # strata.linetype = ggplot2::scale_linetype(),
+        # strata.color = "black" # This causes things to break
 )
-
 
 
 pp_plot(x,

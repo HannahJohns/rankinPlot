@@ -1,57 +1,92 @@
-#' grottaBar
+#' pp_plot
 #'
-#' Automates the production of a Grotta Bar using \code{ggplot()}
+#' Creates probability-probability plots for visualizing all-to-all comparisons
+#' of ranked data across two groups
 #'
 #' @usage
-#' grottaBar(x,groupName,scoreName,strataName = NULL,
-#'           colorScheme="lowGreen",
-#'           printNumbers = "count",
-#'           nCol = 1, dir = "v",
-#'           width = 0.9,
-#'           textSize = 15, numberSize = 5,
-#'           textFace = "plain",
-#'           textColor = "black", textCut = 0,
-#'           lineSize = 0.5,
-#'           returnData = FALSE,
-#'           ...
-#' )
+#'
+#' pp_plot <- function(x,
+#'                     groupName,
+#'                     scoreName,
+#'                     strataName = NULL,
+#'                     panel = TRUE,
+#'                     panel.nCol = 1,
+#'                     panel.dir = "v",
+#'                     polygon = panel,
+#'                     polygon.alpha = 0.4,
+#'                     polygon.color = "#999999",
+#'                     polygon.win.fill = "#71f594",
+#'                     polygon.tie.fill = "#e8e156",
+#'                     polygon.loss.fill= "#f97194",
+#'                     drawContour = FALSE,
+#'                     confint = TRUE,
+#'                     confint.angle = "fixed",
+#'                     confint.level = 0.95,
+#'                     bar = TRUE,
+#'                     bar.colorScheme = "whiteBlueGradient",
+#'                     bar.width = 0.1,
+#'                     bar.lineColor = "black",
+#'                     bar.linewidth =  0.5,
+#'                     bar.text = "count",
+#'                     bar.text.size = 5,
+#'                     bar.text.color = "black",
+#'                     bar.text.face = "plain",
+#'                     line.color = NULL,
+#'                     line.linetype = "solid",
+#'                     strata.text.size = bar.text.size,
+#'                     ...
+#'                     )
 #'
 #' @param x a 2- or 3- dimensional table, returned by the table() function
-#' @param groupName a character string giving the name of the group varialble
-#' @param scoreName a character string giving outcome (mRS) labels
+#' @param groupName a character string giving the name of the group variable
+#' @param scoreName a character string giving outcome labels
 #' @param strataName a character string giving the strata variable name
-#' @param bar.colorScheme a character string indicating the colors that should be used by the plot
-#' @param printNumbers a character string indicating if numbers should be printed for each category.
-#' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
-#' @param dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}.
-#' @param textSize a number indicating the size of text labels
-#' @param numberSize a number indicating the size of printed numbers
-#' @param textFace a character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".
-#' @param textColor vector of two colors for text labels
-#' @param textCut Controls when the color of the text changes. The first \code{textCut} categories will use the first color
-#' @param lineSize a number indicating the thickness of lines in the plot
-#' @param lineColor vector color for lines in the plot
-#' @param drawLine boolean indicating if connecting lines should be drawn or not
-#' @param returnData a boolean indicating if the data used to create the plot should be returned. For expert users only.
-#' @param ... additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.
+#' @param panel a logical indicating if strata should be separated across panels. If true, returns a faceted plot. If false, all strata are condensed into a single panel.
+#' @param panel.nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used or panel is false.
+#' @param panel.dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}. Has no effect if no stratification is used or panel is false.
+#' @param polygon A logical indicating if polygons should be drawn to show the proportion of pairs that are wins, losses or ties. Cannot be used if there are strata and panel is false.
+#' @param polygon.alpha A numeric value for the transparency (alpha) for the polygons.
+#' @param polygon.color A character string giving the border color for the polygons.
+#' @param polygon.win.fill A character string giving the fill color for the polygons indicating a region of wins.
+#' @param polygon.tie.fill A character string giving the fill colour for the polygons indicating a region of tied pairs.
+#' @param polygon.loss.fill A character string giving the fill colour for the polygons indicating a region of losses.
+#' @param drawContour A logical indicating if contours should be drawn indicating where the probability-probability plot should sit if the proportional odds assumption is met.
+#' @param confint A logical indicating if confidence intervals representing should be drawn around each point. See details.
+#' @param confint.angle A character string indicating the direction to draw the angle. See details.
+#' @param confint.level A numeric value indicating the level of confidence for the confidence interval.
+#' @param bar A logical indicating if bars should be drawn to indicate the distribution of the outcome in each group and strata.
+#' @param bar.colorScheme A character string indicating the colour scheme to use for the bars. See details.
+#' @param bar.width A numeric value indicating the width of the bars
+#' @param bar.lineColor A character string indicating the colour of the bar borders.
+#' @param bar.linewidth A numeric value  indicating the width of the bar borders.
+#' @param bar.text a character string indicating if numbers should be printed for each category.
+#' @param bar.text.size a number indicating the size of text labels
+#' @param bar.text.color A vector of colors for text labels
+#' @param bar.text.face A character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".
+#' @param line.color A character string indicating the colour to draw the probability-probability line with, or a discrete color scale returned by ggplot2 to have this vary by strata.
+#' @param line.linetype A character string indicating the linetype to draw the probability-probability line with, or a discrete linetype scale returned by ggplot2 to have this vary by strata.
+#' @param strata.text.size A number indicating the size of the text to draw the strata label. Only relevant if data is stratified and panel is false.
+#' @param ... Any other arguments. Ignored, but used to catch e.g. British spelling of "color".
 #'
 #' @details
-#' This tool produces a "Grotta" bar chart based on a table of count data.
-#' A Grotta bar chart is a common data visualisation tool in stroke research, and is in essence a horizontally stacked proportional bar
-#' chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
-#' categories across groups.
 #'
-#' The tool provides three default options for \code{colorScheme}:
+#' Confidence intervals are estimated using Fisher's exact test and correspond to an odds ratio. They are visually represented as segments on the figure, where the start and end
+#' points correspond to cumulative probabilities that match the upper/lower bound of the odds ratio. Two options are given for the direction of these lines. "fixed" indicates that
+#' all confidence intervals should be drawn at 45 degrees, while "proportional.odds" indicates that they should be drawn perpendicular to the proportional odds contour line.
+#'
+#' The tool provides the following options for \code{bar.colorScheme}:
 #' \itemize{
+#'     \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
 #'     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
 #'     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
 #'     \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
+#'     \item{\code{"none"}}{No scale is supplied and default ggplot2 fill colours are used}
 #' }
 #'
-#' In addition to these, setting \code{colorScheme="custom"} allows for a
-#' user-specified color scheme by using the ggplot2 family of \code{scale_fill_} functions.
+#' In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+#' user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 #'
-#' The options for \code{printNumbers} are:
+#' The options for \code{bar.text} are:
 #' \itemize{
 #'     \item{\code{"count"}}{ The raw counts in the table.}
 #'     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
@@ -63,7 +98,8 @@
 #' These options may be abbreviated. \code{"p"} is not a valid abbreviation as it matches to multiple options.
 #' The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 #'
-#' @returns A ggplot object, or a list containing a ggplot object and the data used to generate it.
+#'
+#' @returns A ggplot object containing the plot.
 #'
 #' @examples
 #'
@@ -73,74 +109,48 @@
 #'            Group=df$treat,
 #'            Time=df$time)
 #'
-#' grottaBar(x,groupName="Group",
-#'           scoreName = "mRS",
-#'           strataName="Time",
-#'           colorScheme ="lowGreen"
-#'  )
+#'pp_plot(x,
+#' groupName =  "Group",
+#' scoreName = "mRS",
+#' strataName = "Time",
+#' panel = TRUE,
+#' polygon.alpha = 0.3,
+#' line.color ="black"
+#' )
 #'
-#'   grottaBar(x,groupName="Time",
-#'           scoreName = "mRS",
-#'           strataName="Group",
-#'           colorScheme ="grayscale"
-#'  )
-#'
-#'x <- table(mRS=df$mRS,
-#'           Group=df$treat)
-#'
-#'    grottaBar(x,groupName="Group",
-#'              scoreName = "mRS",
-#'              colorScheme ="custom"
-#'    ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
-#'
-#'   grottaBar(x,groupName="Group",
-#'           scoreName = "mRS",
-#'           colorScheme ="custom",
-#'           textFace = "italic",
-#'           printNumbers = "count.percentage"
-#'  ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
-#'
-#'
-#' grottaBar(
-#'           x,
-#'           groupName = "Group",
-#'           scoreName = "mRS",
-#'           colorScheme = "custom",
-#'           textFace = "italic",
-#'           printNumbers = "count.percentage"
-#' ) + viridis::scale_fill_viridis(discrete = TRUE, direction = -1)
-#'
-#'
-#' grottaBar(x,groupName="Group",
-#'            scoreName = "mRS",
-#'            colorScheme ="custom",
-#'            textFace = "italic",
-#'            textColor = c("black","white"),
-#'            lineColor = "white",
-#'            textCut = 5,
-#'            printNumbers = "count.percentage"
-#' ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
-#'
+#' pp_plot(x,
+#'         groupName =  "Group",
+#'         scoreName = "mRS",
+#'         strataName = "Time",
+#'         panel = FALSE,
+#'         confint = FALSE,
+#'         line.linetype = "solid"
+#' )
 #'
 pp_plot <- function(x,
                     groupName,
                     scoreName,
                     strataName = NULL,
 
-                    panel = T,
-                    panel.nCol = 1,
-                    panel.dir = "v",
+                    panel = TRUE,
+                    panel.nCol = NULL,
+                    panel.dir = "h",
 
-                    drawPolygon = panel,
+                    polygon = panel,
+                    polygon.alpha = 0.4,
+                    polygon.color = "#999999",
+                    polygon.win.fill = "#71f594",
+                    polygon.tie.fill = "#e8e156",
+                    polygon.loss.fill= "#f97194",
 
-                    drawContour = F,
+                    drawContour = FALSE,
 
-                    confint = T,
+                    confint = TRUE,
                     confint.angle = "fixed",
                     confint.level = 0.95,
 
-                    bar = T,
-                    bar.colorScheme = "lowGreen",
+                    bar = TRUE,
+                    bar.colorScheme = "whiteBlueGradient",
                     bar.width = 0.1,
                     bar.lineColor = "black",
                     bar.linewidth =  0.5,
@@ -150,15 +160,16 @@ pp_plot <- function(x,
                     bar.text.color = "black",
                     bar.text.face = "plain",
 
-                    strata.color = NULL,
+                    line.color = NULL,
+                    line.linetype = "solid",
                     strata.text.size = bar.text.size,
-                    strata.linetype = "solid",
-
                     ...
 ){
 
-  # Allow British English spelling of "color"
+  # Used in the main PP plot and strata labels
+  aes_wrapper <- function(...){ggplot2::aes(...)}
 
+  # Allow British English spelling of "color"
   args <- list(...)
 
   if(!is.null(args$colourScheme)){
@@ -187,20 +198,15 @@ pp_plot <- function(x,
   strataLevels <- levels(x$strata)
   scoreLevels <- levels(x$score)
 
-
   # Get default options
 
-  if(is.null(strata.color)){
-    if(length(strataLevels)==1){
-      strata.color <- "black"
+  if(is.null(line.color)){
+    if(length(strataLevels)==1 | panel ){
+      line.color <- "black"
     } else {
-      strata.color <- ggplot2::scale_color_brewer(palette="Set1")
+      line.color <- ggplot2::scale_color_brewer(palette="Set1")
     }
   }
-
-
-
-
 
   # Get proportions. This has to be done by strata.
   x <- by(x,x$strata,function(x){
@@ -254,7 +260,6 @@ pp_plot <- function(x,
   oddsCurve <- function(x,r) r*x/((r-1)*x + 1)
   oddsCurve_x <- function(x,r) r/((r-1)*x+1)^2 # First derivative with respect to x
 
-
   # x_strata <- x[x$strata==x$strata[1],]
   results_by_strata <- by(x,x$strata,function(x_strata){
 
@@ -277,9 +282,6 @@ pp_plot <- function(x,
 
     posGrid$score_1 <- factor(posGrid$score_1, labels = scoreLevels)
     posGrid$score_2 <- factor(posGrid$score_2, labels = scoreLevels)
-
-
-
 
     # If we want to add contour lines, set this up here
     # TODO: we should offer this as an option for the user to specify.
@@ -384,7 +386,7 @@ pp_plot <- function(x,
         )
       )
 
-      out <- c(fisher.test(this_xtab)$estimate, fisher.test(this_xtab, conf.level = confint.level)$conf.int)
+      out <- c(stats::fisher.test(this_xtab)$estimate, stats::fisher.test(this_xtab, conf.level = confint.level)$conf.int)
 
       names(out) <- c("or","lower","upper")
       out
@@ -403,7 +405,7 @@ pp_plot <- function(x,
 
       # We can just rootfind this
 
-      x_lower <- uniroot(function(x_lower){
+      x_lower <- stats::uniroot(function(x_lower){
 
         if(confint.angle == "proportional.odds"){
           m <- -1/oddsCurve_x(x_mid,tieGrid[i,"or"])
@@ -509,7 +511,6 @@ pp_plot <- function(x,
     # contour_df_odds$strata <- unique(x_strata$strata)
     odds$strata <- unique(x_strata$strata)
 
-
     return(list(
       tieGrid = tieGrid,
       winShape = winShape,
@@ -533,28 +534,24 @@ pp_plot <- function(x,
   # contour_df_odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df_odds}))
   odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$odds}))
 
-
-
-  library(ggplot2)
-
   out <- ggplot2::ggplot()
 
   # Draw polygons
-  if(drawPolygon){
+  if(polygon){
     out <- out +
       ggplot2::geom_rect(data=tieGrid,
-                fill="#e8e156",
-                alpha=0.4,
-                color="#999999",
+                fill=polygon.tie.fill,
+                alpha=polygon.alpha,
+                color=polygon.color,
                 ggplot2::aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,
                     group=paste(score_1,score_2)
                 )
       )+
-      ggplot2::geom_polygon(data=winShape,color="#999999",fill="#71f594", alpha = 0.4,aes(x=x,y=y))+
-      ggplot2::geom_polygon(data=lossShape,color="#999999",fill="#f97194", alpha = 0.4,aes(x=x,y=y))
+      ggplot2::geom_polygon(data=winShape,color=polygon.color,fill=polygon.win.fill, alpha = polygon.alpha, ggplot2::aes(x=x,y=y))+
+      ggplot2::geom_polygon(data=lossShape,color=polygon.color,fill=polygon.loss.fill, alpha = polygon.alpha, ggplot2::aes(x=x,y=y))
   }
 
-  out <- out + ggplot2::annotate("segment",x=0,y=0,xend=1,yend=1, color="dark red",size=1, linetype="dashed")
+  out <- out + ggplot2::annotate("segment",x=0,y=0,xend=1,yend=1, color="dark red",linewidth=1, linetype="dashed")
 
   # Draw contour lines
 
@@ -571,7 +568,6 @@ pp_plot <- function(x,
                 ggplot2::aes(x=qc,y=qt,label=sprintf("%0.2f",r)),
                 position=position_dodge()
       )
-
 
     #
     # out +
@@ -724,15 +720,20 @@ pp_plot <- function(x,
 
 
     # Colour schemes for the bars
-    # TODO: The default for this should be blue gradient.
-
     if("ScaleDiscrete" %in% class(bar.colorScheme)){
 
       out <- out + bar.colorScheme
 
     } else {
 
-      if(bar.colorScheme=="lowGreen"){
+      if(bar.colorScheme == "whiteBlueGradient"){
+
+        fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+        names(fill_colours) <- scoreLevels
+
+        out <- out + ggplot2::scale_fill_manual(values = fill_colours)
+
+      } else if(bar.colorScheme=="lowGreen"){
 
         out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
 
@@ -763,78 +764,105 @@ pp_plot <- function(x,
 
     if(!panel & length(unique(x$strata))>1){
 
-      stop("This is old and needs replaced with the same structure we use for the main plot.")
+      segment_horiz_aes <- list(
+        x=rlang::sym("position"),
+        y=rlang::sym("position"),
+        yend=rlang::sym("position")
+      )
+      segment_horiz_constant <- list(xend=0)
 
+      segment_vert_aes <- list(
+        x=rlang::sym("position"),
+        y=rlang::sym("position"),
+        xend=rlang::sym("position")
+      )
+      segment_vert_constant <- list(yend=0)
 
-      if(length(strata.linetype) == 1){
+      strata_label_aes  <- list(
+        label = rlang::sym("strata"),
+        x=rlang::sym("position"),
+        y=rlang::sym("position")
+      )
+      strata_label_constant <- list(size=strata.text.size,
+                                    fill="white"
+                                    )
 
-        # Linetype doesn't vary, strata should not be an aesthetic mapping for it
+      # Did we specify a type for the line?
+      # Is it an aesthetic mapping?
+      if(length(line.linetype) == 1){
 
-        out <- out + ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
-                                           ggplot2::aes(label = strata,
-                                                        color = strata,
-                                                        x=(barMin + barMax)/2 ,
-                                                        y=(barMin + barMax)/2,
-                                                        yend=(barMin + barMax)/2,
-                                           ),
-                                           xend=0,
-                                           linetype=strata.linetype
-        ) +
-          ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
-                                ggplot2::aes(label = strata,
-                                             color = strata,
-                                             x=(barMin + barMax)/2 ,
-                                             xend=(barMin + barMax)/2 ,
-                                             y=(barMin + barMax)/2
-                                ),
-                                yend=0,
-                                linetype=strata.linetype
-          )
+        segment_horiz_constant <- c(segment_horiz_constant, linetype = line.linetype)
+        segment_vert_constant <- c(segment_vert_constant, linetype = line.linetype)
+        strata_label_constant <- c(strata_label_constant, linetype = line.linetype)
 
+      } else if("ScaleDiscrete" %in% class(line.linetype)){
 
-      } else if("ScaleDiscrete" %in% class(strata.linetype)) {
+        segment_horiz_aes <- c(segment_horiz_aes, linetype = rlang::sym("strata"))
+        segment_vert_aes <- c(segment_vert_aes, linetype = rlang::sym("strata"))
+        strata_label_aes <- c(strata_label_aes, linetype = rlang::sym("strata"))
 
-        # Linetype is a scale and should vary
-        out <- out + ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
-                                           ggplot2::aes(
-                                             color = strata,
-                                             linetype = strata,
-                                             x=(barMin + barMax)/2 ,
-                                             y=(barMin + barMax)/2,
-                                             yend=(barMin + barMax)/2,
-                                           ),
-                                           xend=0
-        ) +
-          ggplot2::geom_segment(data= unique(tieGrid[,c("strata","barMin","barMax")]),
-                                ggplot2::aes(
-                                  color = strata,
-                                  linetype = strata,
-                                  x=(barMin + barMax)/2 ,
-                                  xend=(barMin + barMax)/2 ,
-                                  y=(barMin + barMax)/2
-                                ),
-                                yend=0
-          )
-
-      } else {
-        stop("strata.linetype not recognised")
       }
 
 
-      out <- out + ggplot2::geom_label(data =  unique(tieGrid[,c("strata","barMin","barMax")]),
-                                       ggplot2::aes(label = strata,
-                                                    color = strata,
-                                                    x=(barMin + barMax)/2 ,
-                                                    y=(barMin + barMax)/2
-                                       ),
-                                       label.size=NA,
-                                       size=strata.text.size,
-                                       fill="white"
-      )
+      # Do the same with color
+      # Did we specify a type for the line?
+      # Is it an aesthetic mapping?
+
+
+
+      if(length(line.color) == 1){
+
+        segment_horiz_constant <- c(segment_horiz_constant, color = line.color)
+        segment_vert_constant <- c(segment_vert_constant, color = line.color)
+        strata_label_constant <- c(strata_label_constant, color = line.color)
+
+      } else if("ScaleDiscrete" %in% class(line.color)){
+
+        segment_horiz_aes <- c(segment_horiz_aes, color = rlang::sym("strata"))
+        segment_vert_aes <- c(segment_vert_aes, color = rlang::sym("strata"))
+        strata_label_aes <- c(strata_label_aes, color = rlang::sym("strata"))
+
+      }
+
+      segment_horiz_aes <- do.call(aes_wrapper,segment_horiz_aes)
+      segment_vert_aes <- do.call(aes_wrapper,segment_vert_aes)
+      strata_label_aes <- do.call(aes_wrapper,strata_label_aes)
+
+
+      # Feeding through the position without naming it was causing problems
+      strataLabel_data <- unique(tieGrid[,c("strata","barMin","barMax")])
+      strataLabel_data$position <- (strataLabel_data$barMin + strataLabel_data$barMax)/2
+
+      out <- out + do.call(function(...){ggplot2::geom_segment(data= strataLabel_data,
+                                                               segment_horiz_aes,
+                                                               ...,
+                                                               show.legend = FALSE
+                                                               )},
+                           segment_horiz_constant
+                           )+
+                          do.call(function(...){ggplot2::geom_segment(data= strataLabel_data,
+                                                                      segment_vert_aes,
+                                                                      ...,
+                                                                      show.legend = FALSE
+                          )},
+                          segment_vert_constant
+                          ) +
+                          do.call(function(...){ggplot2::geom_label(data= strataLabel_data,
+                                                               strata_label_aes,
+                                                               ...,
+                                                               show.legend = FALSE
+                          )},
+                          strata_label_constant
+                          )
+
 
     } # End if we're adding stratum labels
 
-  }
+
+  } # End if bars are shown
+
+
+  ## Main PP Plot ##################################################
 
   # Draw points
 
@@ -843,8 +871,6 @@ pp_plot <- function(x,
 
   # Construct the aesthetic mapping algorithmically
   # so we can inject the options we need
-
-  aes_wrapper <- function(...){ggplot2::aes(...)}
 
   path_aes <- list(x=rlang::sym("x"),
                    y=rlang::sym("y"))
@@ -864,13 +890,13 @@ pp_plot <- function(x,
 
   # Did we specify a type for the line?
   # Is it an aesthetic mapping?
-  if(length(strata.linetype) == 1){
+  if(length(line.linetype) == 1){
 
-    path_constant <- c(path_constant,linetype=strata.linetype)
-    # point_constant <- c(point_constant,linetype=strata.linetype)
-    # confint_constant <- c(confint_constant,linetype=strata.linetype)
+    path_constant <- c(path_constant,linetype=line.linetype)
+    # point_constant <- c(point_constant,linetype=line.linetype)
+    # confint_constant <- c(confint_constant,linetype=line.linetype)
 
-  } else if("ScaleDiscrete" %in% class(strata.linetype)){
+  } else if("ScaleDiscrete" %in% class(line.linetype)){
 
     path_aes <- c(path_aes,linetype=rlang::sym("strata"))
     # point_aes <- c(point_aes,linetype=rlang::sym("strata"))
@@ -881,13 +907,13 @@ pp_plot <- function(x,
   # Do the same with color
   # Did we specify a type for the line?
   # Is it an aesthetic mapping?
-  if(length(strata.color) == 1){
+  if(length(line.color) == 1){
 
-    path_constant <- c(path_constant,color=strata.color)
-    point_constant <- c(point_constant,color=strata.color)
-    confint_constant <- c(confint_constant,color=strata.color)
+    path_constant <- c(path_constant,color=line.color)
+    point_constant <- c(point_constant,color=line.color)
+    confint_constant <- c(confint_constant,color=line.color)
 
-  } else if("ScaleDiscrete" %in% class(strata.color)){
+  } else if("ScaleDiscrete" %in% class(line.color)){
 
     path_aes <- c(path_aes,color=rlang::sym("strata"))
     point_aes <- c(point_aes,color=rlang::sym("strata"))
@@ -922,20 +948,30 @@ pp_plot <- function(x,
 
 
   # Add scales if they were instructed.
-  if("ScaleDiscrete" %in% class(strata.color)){
-    out <- out + strata.color
+  if("ScaleDiscrete" %in% class(line.color)){
+    out <- out + line.color
   }
 
 
-  if("ScaleDiscrete" %in% class(strata.linetype)){
-    out <- out + strata.linetype
+  if("ScaleDiscrete" %in% class(line.linetype)){
+    out <- out + line.linetype
   }
 
+  labs_list <- list(x=groupLevels[1],
+                    y=groupLevels[2],
+                    fill=scoreName)
 
-  # TODO: These should be given as options
+  if("ScaleDiscrete" %in% class(line.linetype)){
+    labs_list <- c(labs_list, linetype = strataName)
+  }
+
+  if("ScaleDiscrete" %in% class(line.color)){
+    labs_list <- c(labs_list, color = strataName)
+  }
+
 
   out <- out +
-    ggplot2::labs(x="Control distribution",y="Treatment distribution",fill=strataName) +
+    do.call(function(...){ggplot2::labs(...)},labs_list)+
     ggplot2::theme_bw()+
     ggplot2::theme(
       panel.grid = ggplot2::element_blank(),
@@ -943,7 +979,7 @@ pp_plot <- function(x,
     )
 
   if(panel & length(unique(x$strata)) > 1){
-    out <- out + ggplot2::facet_wrap(~strata)
+    out <- out + ggplot2::facet_wrap(~strata, ncol = panel.nCol, dir = panel.dir)
   }
 
   out

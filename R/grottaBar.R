@@ -4,23 +4,25 @@
 #'
 #' @usage
 #' grottaBar(x,groupName,scoreName,strataName = NULL,
-#'           colorScheme="lowGreen",
+#'           colorScheme="whiteBlueGradient",
 #'           printNumbers = "count",
 #'           nCol = 1, dir = "v",
 #'           width = 0.9,
 #'           textSize = 15, numberSize = 5,
 #'           textFace = "plain",
-#'           textColor = "black", textCut = 0,
+#'           textColor = "black",
 #'           lineSize = 0.5,
+#'           textColor = "black",
+#'           drawLines = TRUE,
 #'           returnData = FALSE,
 #'           ...
 #' )
 #'
 #' @param x a 2- or 3- dimensional table, returned by the table() function
-#' @param groupName a character string giving the name of the group varialble
-#' @param scoreName a character string giving outcome (mRS) labels
+#' @param groupName a character string giving the name of the group variable
+#' @param scoreName a character string giving outcome labels
 #' @param strataName a character string giving the strata variable name
-#' @param colorScheme a character string indicating the colors that should be used by the plot
+#' @param colorScheme a character string indicating the colors that should be used by the plot, or a discrete fill scale returned by ggplot2.
 #' @param width a number adjusting the width of the lines between bars
 #' @param printNumbers a character string indicating if numbers should be printed for each category.
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
@@ -28,8 +30,7 @@
 #' @param textSize a number indicating the size of text labels
 #' @param numberSize a number indicating the size of printed numbers
 #' @param textFace a character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".
-#' @param textColor vector of two colors for text labels
-#' @param textCut Controls when the color of the text changes. The first \code{textCut} categories will use the first color
+#' @param textColor vector of colors for text labels
 #' @param lineSize a number indicating the thickness of lines in the plot
 #' @param lineColor vector color for lines in the plot
 #' @param drawLine boolean indicating if connecting lines should be drawn or not
@@ -42,15 +43,17 @@
 #' chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 #' categories across groups.
 #'
-#' The tool provides three default options for \code{colorScheme}:
+#' The tool provides the following options for \code{colorScheme}:
 #' \itemize{
+#'     \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
 #'     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
 #'     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
 #'     \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
+#'     \item{\code{"none"}}{No scale is supplied and default ggplot2 fill colours are used}
 #' }
 #'
-#' In addition to these, setting \code{colorScheme="custom"} allows for a
-#' user-specified color scheme by using the ggplot2 family of \code{scale_fill_} functions.
+#' In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+#' user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 #'
 #' The options for \code{printNumbers} are:
 #' \itemize{
@@ -83,7 +86,7 @@
 #'   grottaBar(x,groupName="Time",
 #'           scoreName = "mRS",
 #'           strataName="Group",
-#'           colorScheme ="grayscale"
+#'           textColor = c(rep("black",4),rep("white",3))
 #'  )
 #'
 #'x <- table(mRS=df$mRS,
@@ -91,8 +94,19 @@
 #'
 #'    grottaBar(x,groupName="Group",
 #'              scoreName = "mRS",
+#'              colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+#'    )
+#'
+#'    grottaBar(x,groupName="Group",
+#'              scoreName = "mRS",
+#'              colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+#'    )
+#'
+#'    grottaBar(x,groupName="Group",
+#'              scoreName = "mRS",
 #'              colorScheme ="custom"
 #'    ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+#'
 #'
 #'   grottaBar(x,groupName="Group",
 #'           scoreName = "mRS",
@@ -127,7 +141,7 @@ grottaBar <- function(x,
                       groupName,
                       scoreName,
                       strataName = NULL,
-                      colorScheme = "lowGreen",
+                      colorScheme = "whiteBlueGradient",
                       printNumbers = "count",
                       nCol = 1,
                       dir = "v",
@@ -136,7 +150,6 @@ grottaBar <- function(x,
                       numberSize = 5,
                       textFace = "plain",
                       textColor = "black",
-                      textCut = 0,
                       lineSize = 0.5,
                       lineColor = "black",
                       drawLines = TRUE,
@@ -144,12 +157,12 @@ grottaBar <- function(x,
                       ...
 ){
 
+  args <- list(...)
+
   # Allow British English spelling of "color"
   # exists mainly for backwards compatibility
   # from before arguments were homogenised
   # to american spelling
-
-  args <- list(...)
 
   if(!is.null(args$colourScheme)){
     colorScheme <- args$colourScheme
@@ -158,7 +171,6 @@ grottaBar <- function(x,
   if(!is.null(args$textColour)){
     textColor <- args$textColour
   }
-
 
   # This code draws heavily from aosmith's answer to the following question:
   # https://stackoverflow.com/questions/51213169/is-there-an-efficient-way-to-draw-lines-between-different-elements-in-a-stacked
@@ -198,6 +210,8 @@ grottaBar <- function(x,
   x <- do.call("rbind",x)
   rownames(x) <- NULL
 
+  strataLevels <- levels(x$strata)
+  scoreLevels <- levels(x$score)
   groupLevels <- levels(x$group)
   x$group <- as.numeric(x$group)
 
@@ -229,9 +243,36 @@ grottaBar <- function(x,
   })
   y <- do.call("rbind",y)
 
+
+
+  # Depreciated options go here.
+  # It can't go earlier because we need some of the above preprocessing
+  # to map to the new version of the results
+
+  if(!is.null(args$textCut)){
+
+    warning("Using `textCut` is depreciated. Please provide a character vector to the `textColor` argument instead.")
+
+    new_textColor <- rep(textColor[1],length(scoreLevels))
+    if(length(textColor)>1){
+      new_textColor[(1:length(scoreLevels)) > args$textCut] <- textColor[2]
+      new_textColor[(1:length(scoreLevels)) <= args$textCut] <- textColor[1]
+    }
+
+    textColor <- new_textColor
+
+  }
+
+  if(length(textColor) == 1){
+    textColor <- rep(textColor,length(scoreLevels))
+  } else if(length(textColor) != length(scoreLevels) ){
+    stop("textColor should be of length 1 or length equal to the number of values the score can take on.")
+  }
+
+  names(textColor) <- scoreLevels
+
   ggp <- ggplot2::ggplot(x)+
     ggplot2::geom_rect(color=lineColor,
-                       alpha = ifelse(colorScheme=="grayscale",0.5,1),
                        linewidth=lineSize,
                        ggplot2::aes(xmin=group-width/2,xmax=group+width/2,
                                     ymin=p_prev,ymax=p_prev+p,fill=score))
@@ -239,89 +280,108 @@ grottaBar <- function(x,
   ggp <- ggp +
     ggplot2::geom_line(data=y, color=lineColor,linewidth=lineSize,
                        ggplot2::aes(x=group,y=p+p_prev,group=line_id))
-    }
-
-
-  if(grepl("^c[o]*[u]*[n]*[t]*$",printNumbers)){
-
-    if(is.integer(x$n)){
-      ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                     fontface = textFace,
-                                     ggplot2::aes(x=group,y=p_prev+0.5*p,
-                                                  color = as.numeric(score) > textCut,
-                                                  label=sprintf("%d",n)))
-    } else {
-
-      #Get maximum required decimal places
-      maxDecimal <- max(nchar(x$n-floor(x$n))-2)
-
-      ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                     fontface = textFace,
-                                     ggplot2::aes(x=group,y=p_prev+0.5*p,
-                                                  color = as.numeric(score) > textCut,
-                                                  label=sprintf(sprintf("%%0.%df",maxDecimal),n)))
-    }
-
-  } else if (grepl("^pr[o]*[p]*[o]*[r]*[t]*[i]*[o]*[n]*$",printNumbers)){
-
-    ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                   fontface = textFace,
-                                   ggplot2::aes(x=group,y=p_prev+0.5*p,
-                                                color = as.numeric(score) > textCut,
-                                                label=sprintf("%0.2f",p)))
-
-  } else if (grepl("^pe[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*$",printNumbers)){
-
-    ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                   fontface = textFace,
-                                   ggplot2::aes(x=group,y=p_prev+0.5*p,
-                                                color = as.numeric(score) > textCut,
-                                                label=sprintf("%2.2f",100*p)))
-
-  } else if (grepl("^c[o]*[u]*[n]*[t]*.p[e]*[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*",printNumbers)) {
-
-    if(is.integer(x$n)){
-      ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0),], size=numberSize,
-                                     fontface = textFace,
-                                     ggplot2::aes(x=group,y=p_prev+0.5*p,
-                                                  color = as.numeric(score) > textCut,
-                                                  label=sprintf("%d\n(%2.1f%s)",n,100*p,"%")))
-    } else {
-      stop("count.percentage works only with integers")
-    }
-
-
-
-
-  } else if (grepl("^n[o]*[n]*[e]*$",printNumbers)){
-
-    # Do nothing if we were told not to print any numbers
-
-  } else {
-    stop("Unrecognised option for printNumbers")
   }
 
-  if(colorScheme=="lowGreen"){
 
-    ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
+  for(this_color in unique(textColor)){
 
-  } else if(colorScheme=="lowRed"){
 
-    ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
 
-  } else if  (colorScheme=="grayscale"){
+    if(grepl("^c[o]*[u]*[n]*[t]*$",printNumbers)){
 
-    ggp <- ggp + ggplot2::scale_fill_brewer(palette="Greys")
+      if(is.integer(x$n)){
+        ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0 &
+                                                    x$score %in% names(textColor[textColor==this_color])
+                                                    ),], size=numberSize,
+                                       fontface = textFace,
+                                       color = this_color,
+                                       ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                    label=sprintf("%d",n)))
+      } else {
 
-  } else if ( colorScheme =="custom"){
+        #Get maximum required decimal places
+        maxDecimal <- max(nchar(x$n-floor(x$n))-2)
 
-    # Do nothing, assume the user will handle this later.
+        ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0 &
+                                                    x$score %in% names(textColor[textColor==this_color])),], size=numberSize,
+                                       fontface = textFace,
+                                       color = this_color,
+                                       ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                    label=sprintf(sprintf("%%0.%df",maxDecimal),n)))
+      }
+
+    } else if (grepl("^pr[o]*[p]*[o]*[r]*[t]*[i]*[o]*[n]*$",printNumbers)){
+
+      ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0 &
+                                                  x$score %in% names(textColor[textColor==this_color])),], size=numberSize,
+                                     fontface = textFace,
+                                     color = this_color,
+                                     ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                  color = this_color,
+                                                  label=sprintf("%0.2f",p)))
+
+    } else if (grepl("^pe[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*$",printNumbers)){
+
+      ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0 &
+                                                  x$score %in% names(textColor[textColor==this_color])),], size=numberSize,
+                                     fontface = textFace,
+                                     color = this_color,
+                                     ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                  label=sprintf("%2.2f",100*p)))
+
+    } else if (grepl("^c[o]*[u]*[n]*[t]*.p[e]*[r]*[c]*[e]*[n]*[t]*[a]*[g]*[e]*",printNumbers)) {
+
+      if(is.integer(x$n)){
+        ggp <- ggp+ ggplot2::geom_text(data=x[which(x$n>0 &
+                                                    x$score %in% names(textColor[textColor==this_color])),], size=numberSize,
+                                       fontface = textFace,
+                                       color = this_color,
+                                       ggplot2::aes(x=group,y=p_prev+0.5*p,
+                                                    label=sprintf("%d\n(%2.1f%s)",n,100*p,"%")))
+      } else {
+        stop("count.percentage works only with integers")
+      }
+
+
+    } else if (grepl("^n[o]*[n]*[e]*$",printNumbers)){
+
+      # Do nothing if we were told not to print any numbers
+
+    } else {
+      stop("Unrecognised option for printNumbers")
+    }
+  }
+
+
+
+  # Colour schemes for the bars
+  if("ScaleDiscrete" %in% class(colorScheme)){
+
+    ggp <- ggp + colorScheme
 
   } else {
 
-    stop("colorScheme not recognised")
+    if(colorScheme == "whiteBlueGradient"){
+
+      fill_colours <- colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+      names(fill_colours) <- scoreLevels
+
+      ggp <- ggp + ggplot2::scale_fill_manual(values = fill_colours)
+
+    } else if(colorScheme=="lowGreen"){
+      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
+    } else if(colorScheme=="lowRed"){
+      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
+    } else if  (colorScheme=="grayscale"){
+      ggp <- ggp + ggplot2::scale_fill_brewer(palette="Greys")
+    } else if ( colorScheme =="custom"){
+      # Do nothing, assume the user will handle this later.
+    } else {
+      stop("colorScheme not recognised")
+    }
 
   }
+
 
 
   if(!is.null(strataName)){
@@ -342,10 +402,8 @@ grottaBar <- function(x,
                    panel.grid.minor = ggplot2::element_blank(),
                    text = ggplot2::element_text(size=textSize),
                    plot.margin = ggplot2::margin(1, 1, 1, 1, "cm")
-    )+
-    ggplot2::scale_color_manual(guide = "none", values = textColor)
+    )
 
-  ggp
 
   if(returnData)
   {
