@@ -13,7 +13,7 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
           textFace = "plain",
           textColor = "black",
           lineSize = 0.5,
-          textColor = "black",
+          lineColor = "black",
           drawLines = TRUE,
           returnData = FALSE,
           ...
@@ -50,11 +50,11 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
 
 \item{lineColor}{vector color for lines in the plot}
 
+\item{drawLines}{boolean indicating if connecting lines should be drawn or not}
+
 \item{returnData}{a boolean indicating if the data used to create the plot should be returned. For expert users only.}
 
 \item{...}{additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.}
-
-\item{drawLine}{boolean indicating if connecting lines should be drawn or not}
 }
 \value{
 A ggplot object, or a list containing a ggplot object and the data used to generate it.
@@ -160,4 +160,7 @@ grottaBar(x,groupName="Group",
 ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
 
 
+}
+\references{
+National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group. "Tissue plasminogen activator for acute ischemic stroke." New England Journal of Medicine 333.24 (1995): 1581-1588.
 }

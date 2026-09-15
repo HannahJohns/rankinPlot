@@ -4,37 +4,43 @@
 \alias{pp_plot}
 \title{pp_plot}
 \usage{
-pp_plot <- function(x,
-                    groupName,
-                    scoreName,
-                    strataName = NULL,
-                    panel = TRUE,
-                    panel.nCol = 1,
-                    panel.dir = "v",
-                    polygon = panel,
-                    polygon.alpha = 0.4,
-                    polygon.color = "#999999",
-                    polygon.win.fill = "#71f594",
-                    polygon.tie.fill = "#e8e156",
-                    polygon.loss.fill= "#f97194",
-                    drawContour = FALSE,
-                    confint = TRUE,
-                    confint.angle = "fixed",
-                    confint.level = 0.95,
-                    bar = TRUE,
-                    bar.colorScheme = "whiteBlueGradient",
-                    bar.width = 0.1,
-                    bar.lineColor = "black",
-                    bar.linewidth =  0.5,
-                    bar.text = "count",
-                    bar.text.size = 5,
-                    bar.text.color = "black",
-                    bar.text.face = "plain",
-                    line.color = NULL,
-                    line.linetype = "solid",
-                    strata.text.size = bar.text.size,
-                    ...
-                    )
+pp_plot(x,
+        groupName,
+        scoreName,
+        strataName = NULL,
+        panel = TRUE,
+        panel.nCol = NULL,
+        panel.dir = "h",
+        polygon = panel,
+        polygon.alpha = 0.4,
+        polygon.color = "#999999",
+        polygon.win.fill = "#71f594",
+        polygon.tie.fill = "#e8e156",
+        polygon.loss.fill= "#f97194",
+        contour = FALSE,
+        contour.color = "#555555",
+        contour.line.color = contour.color,
+        contour.label.color = contour.color,
+        confint = TRUE,
+        confint.angle = "fixed",
+        confint.level = 0.95,
+        bar = TRUE,
+        bar.colorScheme = "whiteBlueGradient",
+        bar.width = 0.1,
+        bar.lineColor = "black",
+        bar.linewidth =  0.5,
+        bar.text = "count",
+        bar.text.size = 5,
+        bar.text.color = "black",
+        bar.text.face = "plain",
+        neutral.color = "#222222",
+        neutral.linetype = "dashed",
+        neutral.linewidth = 0.5,
+        line.color = NULL,
+        line.linetype = "solid",
+        strata.text.size = bar.text.size,
+        ...
+        )
 }
 \arguments{
 \item{x}{a 2- or 3- dimensional table, returned by the table() function}
@@ -63,7 +69,13 @@ pp_plot <- function(x,
 
 \item{polygon.loss.fill}{A character string giving the fill colour for the polygons indicating a region of losses.}
 
-\item{drawContour}{A logical indicating if contours should be drawn indicating where the probability-probability plot should sit if the proportional odds assumption is met.}
+\item{contour}{A logical indicating if contours should be drawn indicating where the probability-probability plot should sit if the proportional odds assumption is met.}
+
+\item{contour.color}{A character string giving the color of the contours}
+
+\item{contour.line.color}{A character string giving the color of the contour lines}
+
+\item{contour.label.color}{A character string giving the color of the contour text}
 
 \item{confint}{A logical indicating if confidence intervals representing should be drawn around each point. See details.}
 
@@ -88,6 +100,12 @@ pp_plot <- function(x,
 \item{bar.text.color}{A vector of colors for text labels}
 
 \item{bar.text.face}{A character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".}
+
+\item{neutral.color}{A character string indicating the color of the neutral line}
+
+\item{neutral.linetype}{A character string indicating the line type of the neutral line}
+
+\item{neutral.linewidth}{A numeric value  indicating the width of the neutral line}
 
 \item{line.color}{A character string indicating the colour to draw the probability-probability line with, or a discrete color scale returned by ggplot2 to have this vary by strata.}
 
@@ -159,4 +177,7 @@ pp_plot(x,
         line.linetype = "solid"
 )
 
+}
+\references{
+Johns, Hannah, et al. "Practical guidance for Win Statistics and Tournament Methods for multifaceted outcomes in stroke research: Review and recommendations." International Journal of Stroke (2026) DOI: https://doi.org/10.1177/17474930261475853
 }

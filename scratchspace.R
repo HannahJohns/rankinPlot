@@ -2,6 +2,50 @@ library(rankinPlot)
 
 rm(list=ls())
 
+df <- alteplase
+df$mRS <- df$mRS -1
+x <- table(mRS=df$mRS,
+           Group=df$treat,
+           Time=ifelse(df$time %in% c("0-90","91-180"), "early", "late"))
+           # Time=df$time)
+
+# %in% c("0-90","91-180"), "early", "late")
+#            Time=ifelse(df$time %in% c("0-90","91-180"), "early", "late"))
+
+
+grottaBar(x,
+          groupName =  "Group",
+          scoreName = "mRS",
+          strataName = "Time"
+)
+
+
+pp_plot(x,
+        groupName =  "Group",
+        scoreName = "mRS",
+        strataName = "Time",
+        panel = F,
+        polygon.alpha = 0.3,
+        confint = T, bar.width = 0.05
+        # line.color="black",
+        # line.linetype = ggplot2::scale_linetype(),
+        # bar.colorScheme = "grayscale",
+        # bar.text.color = c(rep("black",5),rep("white",2)),
+        # contour = T,
+        # contour.color = "#CCC"
+)
+
+
+pp_plot(x,
+        groupName =  "Group",
+        scoreName = "mRS",
+        strataName = "Time",
+        panel = FALSE,
+        confint = FALSE,
+        line.linetype = "solid"
+)
+
+
 # Set default colours of bars to be distinct - blue
 
 
@@ -26,10 +70,14 @@ pp_plot(x,
         groupName =  "Group",
         scoreName = "mRS",
         strataName = "Time",
-        panel = T,
+        bar.colorScheme = "grayscale",
+        panel = T, confint = T,
         polygon.alpha = 0.3,
-        line.color ="black"
+        line.color = "black",
+        line.linetype = ggplot2::scale_linetype()
 )
+
+
 
 pp_plot(x,
         groupName =  "Group",

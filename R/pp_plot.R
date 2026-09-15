@@ -5,37 +5,43 @@
 #'
 #' @usage
 #'
-#' pp_plot <- function(x,
-#'                     groupName,
-#'                     scoreName,
-#'                     strataName = NULL,
-#'                     panel = TRUE,
-#'                     panel.nCol = 1,
-#'                     panel.dir = "v",
-#'                     polygon = panel,
-#'                     polygon.alpha = 0.4,
-#'                     polygon.color = "#999999",
-#'                     polygon.win.fill = "#71f594",
-#'                     polygon.tie.fill = "#e8e156",
-#'                     polygon.loss.fill= "#f97194",
-#'                     drawContour = FALSE,
-#'                     confint = TRUE,
-#'                     confint.angle = "fixed",
-#'                     confint.level = 0.95,
-#'                     bar = TRUE,
-#'                     bar.colorScheme = "whiteBlueGradient",
-#'                     bar.width = 0.1,
-#'                     bar.lineColor = "black",
-#'                     bar.linewidth =  0.5,
-#'                     bar.text = "count",
-#'                     bar.text.size = 5,
-#'                     bar.text.color = "black",
-#'                     bar.text.face = "plain",
-#'                     line.color = NULL,
-#'                     line.linetype = "solid",
-#'                     strata.text.size = bar.text.size,
-#'                     ...
-#'                     )
+#' pp_plot(x,
+#'         groupName,
+#'         scoreName,
+#'         strataName = NULL,
+#'         panel = TRUE,
+#'         panel.nCol = NULL,
+#'         panel.dir = "h",
+#'         polygon = panel,
+#'         polygon.alpha = 0.4,
+#'         polygon.color = "#999999",
+#'         polygon.win.fill = "#71f594",
+#'         polygon.tie.fill = "#e8e156",
+#'         polygon.loss.fill= "#f97194",
+#'         contour = FALSE,
+#'         contour.color = "#555555",
+#'         contour.line.color = contour.color,
+#'         contour.label.color = contour.color,
+#'         confint = TRUE,
+#'         confint.angle = "fixed",
+#'         confint.level = 0.95,
+#'         bar = TRUE,
+#'         bar.colorScheme = "whiteBlueGradient",
+#'         bar.width = 0.1,
+#'         bar.lineColor = "black",
+#'         bar.linewidth =  0.5,
+#'         bar.text = "count",
+#'         bar.text.size = 5,
+#'         bar.text.color = NULL,
+#'         bar.text.face = "plain",
+#'         neutral.color = "#222222",
+#'         neutral.linetype = "dashed",
+#'         neutral.linewidth = 0.5,
+#'         line.color = NULL,
+#'         line.linetype = "solid",
+#'         strata.text.size = bar.text.size,
+#'         ...
+#'         )
 #'
 #' @param x a 2- or 3- dimensional table, returned by the table() function
 #' @param groupName a character string giving the name of the group variable
@@ -50,7 +56,10 @@
 #' @param polygon.win.fill A character string giving the fill color for the polygons indicating a region of wins.
 #' @param polygon.tie.fill A character string giving the fill colour for the polygons indicating a region of tied pairs.
 #' @param polygon.loss.fill A character string giving the fill colour for the polygons indicating a region of losses.
-#' @param drawContour A logical indicating if contours should be drawn indicating where the probability-probability plot should sit if the proportional odds assumption is met.
+#' @param contour A logical indicating if contours should be drawn indicating where the probability-probability plot should sit if the proportional odds assumption is met.
+#' @param contour.color A character string giving the color of the contours
+#' @param contour.line.color A character string giving the color of the contour lines
+#' @param contour.label.color A character string giving the color of the contour text
 #' @param confint A logical indicating if confidence intervals representing should be drawn around each point. See details.
 #' @param confint.angle A character string indicating the direction to draw the angle. See details.
 #' @param confint.level A numeric value indicating the level of confidence for the confidence interval.
@@ -63,6 +72,9 @@
 #' @param bar.text.size a number indicating the size of text labels
 #' @param bar.text.color A vector of colors for text labels
 #' @param bar.text.face A character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".
+#' @param neutral.color A character string indicating the color of the neutral line
+#' @param neutral.linetype A character string indicating the line type of the neutral line
+#' @param neutral.linewidth A numeric value  indicating the width of the neutral line
 #' @param line.color A character string indicating the colour to draw the probability-probability line with, or a discrete color scale returned by ggplot2 to have this vary by strata.
 #' @param line.linetype A character string indicating the linetype to draw the probability-probability line with, or a discrete linetype scale returned by ggplot2 to have this vary by strata.
 #' @param strata.text.size A number indicating the size of the text to draw the strata label. Only relevant if data is stratified and panel is false.
@@ -100,6 +112,9 @@
 #'
 #'
 #' @returns A ggplot object containing the plot.
+#'
+#' @references
+#' Johns, Hannah, et al. "Practical guidance for Win Statistics and Tournament Methods for multifaceted outcomes in stroke research: Review and recommendations." International Journal of Stroke (2026) DOI: https://doi.org/10.1177/17474930261475853
 #'
 #' @examples
 #'
@@ -143,7 +158,10 @@ pp_plot <- function(x,
                     polygon.tie.fill = "#e8e156",
                     polygon.loss.fill= "#f97194",
 
-                    drawContour = FALSE,
+                    contour = FALSE,
+                    contour.color = "#555555",
+                    contour.line.color = contour.color,
+                    contour.label.color = contour.color,
 
                     confint = TRUE,
                     confint.angle = "fixed",
@@ -157,8 +175,12 @@ pp_plot <- function(x,
 
                     bar.text = "count",
                     bar.text.size = 5,
-                    bar.text.color = "black",
+                    bar.text.color = NULL,
                     bar.text.face = "plain",
+
+                    neutral.color = "#222222",
+                    neutral.linetype = "dashed",
+                    neutral.linewidth = 0.5,
 
                     line.color = NULL,
                     line.linetype = "solid",
@@ -204,7 +226,7 @@ pp_plot <- function(x,
     if(length(strataLevels)==1 | panel ){
       line.color <- "black"
     } else {
-      line.color <- ggplot2::scale_color_brewer(palette="Set1")
+      line.color <- ggplot2::scale_color_brewer(palette="Dark2")
     }
   }
 
@@ -551,25 +573,27 @@ pp_plot <- function(x,
       ggplot2::geom_polygon(data=lossShape,color=polygon.color,fill=polygon.loss.fill, alpha = polygon.alpha, ggplot2::aes(x=x,y=y))
   }
 
-  out <- out + ggplot2::annotate("segment",x=0,y=0,xend=1,yend=1, color="dark red",linewidth=1, linetype="dashed")
+  out <- out + ggplot2::annotate("segment",x=0,y=0,xend=1,yend=1,
+                                 color=neutral.color,
+                                 linewidth=neutral.linewidth,
+                                 linetype=neutral.linetype)
 
   # Draw contour lines
 
-  if(drawContour){
+  if(contour){
 
     out <- out+
       ggplot2::geom_line(data=contour_df,
-                color="dark gray", linetype="dashed",
+                color=contour.line.color, linetype="dashed",
                 ggplot2::aes(x=qc,y=qt,group=paste(r)))+
       ggplot2::geom_label(data=contour_df_label,
+                color=contour.label.color,
                 label.size = NA,
-                label.padding = unit(0, "lines"),
+                label.padding = ggplot2::unit(0, "lines"),
                 hjust=0,vjust=1,size=3.5,
-                ggplot2::aes(x=qc,y=qt,label=sprintf("%0.2f",r)),
-                position=position_dodge()
+                ggplot2::aes(x=qc,y=qt,label=sprintf("%0.2f",r))
       )
 
-    #
     # out +
     #   geom_path(data=contour_df_odds,
     #             aes(x=qc,y=qt,group=r), color="dark gray", linetype="dashed"
@@ -604,6 +628,66 @@ pp_plot <- function(x,
                          linewidth = bar.linewidth,
                          ggplot2::aes(xmin=barMin,xmax=barMax,
                                       ymin=ymin,ymax=ymax,fill=factor(score_2)))
+
+
+    # Colour schemes for the bars
+    if("ScaleDiscrete" %in% class(bar.colorScheme)){
+
+      out <- out + bar.colorScheme
+
+    } else {
+
+      if(bar.colorScheme == "whiteBlueGradient"){
+
+        fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+        names(fill_colours) <- scoreLevels
+
+        out <- out + ggplot2::scale_fill_manual(values = fill_colours)
+
+      } else if(bar.colorScheme=="lowGreen"){
+
+        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
+
+      } else if(bar.colorScheme=="lowRed"){
+
+        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
+
+      } else if  (bar.colorScheme %in% c("grayscale","greyscale")){
+
+        out <- out + ggplot2::scale_fill_brewer(palette="Greys")
+
+      } else if (bar.colorScheme =="custom"){
+
+        # Do nothing, assume the user will handle this later.
+
+      } else {
+
+        stop("colorScheme not recognised")
+
+      }
+
+    }
+
+    if(is.null(bar.text.color) & ("character" %in% class(fill_colours)) & !("ScaleDiscrete" %in% class(fill_colours))){
+
+      bar.text.color <- sapply(1:length(fill_colours),function(i){
+
+        this_rgb <- c(grDevices::col2rgb(fill_colours[i]))
+
+        color <- NA
+        # If this colour is closer to white, return black. Otherwise, return white
+        if(sum((this_rgb-c(255,255,255))^2) <= sum(this_rgb^2)){
+          color <- "black"
+        } else {
+          color <- "white"
+        }
+        return(color)
+      })
+
+    } else if(is.null(bar.text.color) & ("ScaleDiscrete" %in% class(fill_colours))) {
+      bar.text.color <- "black"
+    }
+
 
 
 
@@ -718,44 +802,6 @@ pp_plot <- function(x,
 
     }
 
-
-    # Colour schemes for the bars
-    if("ScaleDiscrete" %in% class(bar.colorScheme)){
-
-      out <- out + bar.colorScheme
-
-    } else {
-
-      if(bar.colorScheme == "whiteBlueGradient"){
-
-        fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
-        names(fill_colours) <- scoreLevels
-
-        out <- out + ggplot2::scale_fill_manual(values = fill_colours)
-
-      } else if(bar.colorScheme=="lowGreen"){
-
-        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
-
-      } else if(bar.colorScheme=="lowRed"){
-
-        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
-
-      } else if  (bar.colorScheme %in% c("grayscale","greyscale")){
-
-        out <- out + ggplot2::scale_fill_brewer(palette="Greys")
-
-      } else if (bar.colorScheme =="custom"){
-
-        # Do nothing, assume the user will handle this later.
-
-      } else {
-
-        stop("colorScheme not recognised")
-
-      }
-
-    }
 
 
     # Add strata labels for bars if needed.
@@ -975,6 +1021,7 @@ pp_plot <- function(x,
     ggplot2::theme_bw()+
     ggplot2::theme(
       panel.grid = ggplot2::element_blank(),
+      strip.background = ggplot2::element_rect(fill="white"),
       aspect.ratio = 1
     )
 

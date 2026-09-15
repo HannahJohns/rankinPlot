@@ -10,9 +10,9 @@
 #'           width = 0.9,
 #'           textSize = 15, numberSize = 5,
 #'           textFace = "plain",
-#'           textColor = "black",
+#'           textColor = NULL,
 #'           lineSize = 0.5,
-#'           textColor = "black",
+#'           lineColor = "black",
 #'           drawLines = TRUE,
 #'           returnData = FALSE,
 #'           ...
@@ -33,7 +33,7 @@
 #' @param textColor vector of colors for text labels
 #' @param lineSize a number indicating the thickness of lines in the plot
 #' @param lineColor vector color for lines in the plot
-#' @param drawLine boolean indicating if connecting lines should be drawn or not
+#' @param drawLines boolean indicating if connecting lines should be drawn or not
 #' @param returnData a boolean indicating if the data used to create the plot should be returned. For expert users only.
 #' @param ... additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.
 #'
@@ -68,6 +68,9 @@
 #' The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 #'
 #' @returns A ggplot object, or a list containing a ggplot object and the data used to generate it.
+#'
+#' @references
+#' National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group. "Tissue plasminogen activator for acute ischemic stroke." New England Journal of Medicine 333.24 (1995): 1581-1588.
 #'
 #' @examples
 #'
@@ -149,7 +152,7 @@ grottaBar <- function(x,
                       textSize = 15,
                       numberSize = 5,
                       textFace = "plain",
-                      textColor = "black",
+                      textColor = NULL,
                       lineSize = 0.5,
                       lineColor = "black",
                       drawLines = TRUE,
@@ -263,13 +266,15 @@ grottaBar <- function(x,
 
   }
 
-  if(length(textColor) == 1){
-    textColor <- rep(textColor,length(scoreLevels))
-  } else if(length(textColor) != length(scoreLevels) ){
-    stop("textColor should be of length 1 or length equal to the number of values the score can take on.")
+  if(!is.null(textColor)){
+    if(length(textColor) == 1){
+      textColor <- rep(textColor,length(scoreLevels))
+    } else if(length(textColor) != length(scoreLevels) ){
+      stop("textColor should be of length 1 or length equal to the number of values the score can take on.")
+    }
   }
 
-  names(textColor) <- scoreLevels
+
 
   ggp <- ggplot2::ggplot(x)+
     ggplot2::geom_rect(color=lineColor,
@@ -282,6 +287,60 @@ grottaBar <- function(x,
                        ggplot2::aes(x=group,y=p+p_prev,group=line_id))
   }
 
+
+
+
+
+  # Colour schemes for the bars
+  if("ScaleDiscrete" %in% class(colorScheme)){
+
+    ggp <- ggp + colorScheme
+
+  } else {
+
+    if(colorScheme == "whiteBlueGradient"){
+
+      fill_colours <- colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+      names(fill_colours) <- scoreLevels
+
+      ggp <- ggp + ggplot2::scale_fill_manual(values = fill_colours)
+
+    } else if(colorScheme=="lowGreen"){
+      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
+    } else if(colorScheme=="lowRed"){
+      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
+    } else if  (colorScheme=="grayscale"){
+      ggp <- ggp + ggplot2::scale_fill_brewer(palette="Greys")
+    } else if ( colorScheme =="custom"){
+      # Do nothing, assume the user will handle this later.
+    } else {
+      stop("colorScheme not recognised")
+    }
+
+  }
+
+
+  if(is.null(textColor) & ("character" %in% class(fill_colours)) & !("ScaleDiscrete" %in% class(fill_colours))){
+
+    textColor <- sapply(1:length(fill_colours),function(i){
+
+      this_rgb <- c(grDevices::col2rgb(fill_colours[i]))
+
+      color <- NA
+      # If this colour is closer to white, return black. Otherwise, return white
+      if(sum((this_rgb-c(255,255,255))^2) <= sum(this_rgb^2)){
+        color <- "black"
+      } else {
+        color <- "white"
+      }
+      return(color)
+    })
+
+  } else if(is.null(textColor) & ("ScaleDiscrete" %in% class(fill_colours))) {
+    textColor <- "black"
+  }
+
+  names(textColor) <- scoreLevels
 
   for(this_color in unique(textColor)){
 
@@ -350,36 +409,6 @@ grottaBar <- function(x,
     } else {
       stop("Unrecognised option for printNumbers")
     }
-  }
-
-
-
-  # Colour schemes for the bars
-  if("ScaleDiscrete" %in% class(colorScheme)){
-
-    ggp <- ggp + colorScheme
-
-  } else {
-
-    if(colorScheme == "whiteBlueGradient"){
-
-      fill_colours <- colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
-      names(fill_colours) <- scoreLevels
-
-      ggp <- ggp + ggplot2::scale_fill_manual(values = fill_colours)
-
-    } else if(colorScheme=="lowGreen"){
-      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
-    } else if(colorScheme=="lowRed"){
-      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
-    } else if  (colorScheme=="grayscale"){
-      ggp <- ggp + ggplot2::scale_fill_brewer(palette="Greys")
-    } else if ( colorScheme =="custom"){
-      # Do nothing, assume the user will handle this later.
-    } else {
-      stop("colorScheme not recognised")
-    }
-
   }
 
 
