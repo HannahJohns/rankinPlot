@@ -23,6 +23,7 @@
 #' @param scoreName a character string giving outcome labels
 #' @param strataName a character string giving the strata variable name
 #' @param colorScheme a character string indicating the colors that should be used by the plot, or a discrete fill scale returned by ggplot2.
+#' @param colorScheme.reverse A logical  indicating if the colour scheme should be reversed.
 #' @param width a number adjusting the width of the lines between bars
 #' @param printNumbers a character string indicating if numbers should be printed for each category.
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
@@ -74,77 +75,59 @@
 #'
 #' @examples
 #'
-#' df <- alteplase
-#' df$mRS <- df$mRS -1
-#' x <- table(mRS=df$mRS,
-#'            Group=df$treat,
-#'            Time=df$time)
 #'
-#' grottaBar(x,groupName="Group",
-#'           scoreName = "mRS",
-#'           strataName="Time",
-#'           colorScheme ="lowGreen"
-#'  )
+#'df <- alteplase
 #'
-#'   grottaBar(x,groupName="Time",
-#'           scoreName = "mRS",
-#'           strataName="Group",
-#'           textColor = c(rep("black",4),rep("white",3))
-#'  )
+#'x <- table(mRS=df$mRS,
+#'           Group=df$treat,
+#'           Time=df$time)
+#'
+#'grottaBar(x,groupName="Group",
+#'          scoreName = "mRS",
+#'          strataName="Time"
+#')
+#'
+#'
+#'grottaBar(x,groupName="Time",
+#'          scoreName = "mRS",
+#'          strataName="Group",
+#'          textColor = c(rep("black",4),rep("white",3))
+#')
+#'
 #'
 #'x <- table(mRS=df$mRS,
 #'           Group=df$treat)
 #'
-#'    grottaBar(x,groupName="Group",
-#'              scoreName = "mRS",
-#'              colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
-#'    )
 #'
-#'    grottaBar(x,groupName="Group",
-#'              scoreName = "mRS",
-#'              colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
-#'    )
+#'grottaBar(x,groupName="Group",
+#'          scoreName = "mRS",
+#'          colorScheme = FALSE
+#')
 #'
-#'    grottaBar(x,groupName="Group",
-#'              scoreName = "mRS",
-#'              colorScheme ="custom"
-#'    ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+#'grottaBar(x,groupName="Group",
+#'          scoreName = "mRS",
+#'          colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+#')
 #'
 #'
-#'   grottaBar(x,groupName="Group",
-#'           scoreName = "mRS",
-#'           colorScheme ="custom",
-#'           textFace = "italic",
-#'           printNumbers = "count.percentage"
-#'  ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+#'grottaBar(x,groupName="Group",
+#'          scoreName = "mRS",
+#'          colorScheme = FALSE
+#')+ ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 #'
 #'
-#' grottaBar(
-#'           x,
-#'           groupName = "Group",
-#'           scoreName = "mRS",
-#'           colorScheme = "custom",
-#'           textFace = "italic",
-#'           printNumbers = "count.percentage"
-#' ) + viridis::scale_fill_viridis(discrete = TRUE, direction = -1)
 #'
-#'
-#' grottaBar(x,groupName="Group",
-#'            scoreName = "mRS",
-#'            colorScheme ="custom",
-#'            textFace = "italic",
-#'            textColor = c("black","white"),
-#'            lineColor = "white",
-#'            textCut = 5,
-#'            printNumbers = "count.percentage"
-#' ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
-#'
-#'
+#'grottaBar(x,groupName="Group",
+#'          scoreName = "mRS",
+#'          printNumbers = "count.percentage",
+#'          colorScheme = "Grayscale"
+#')
 grottaBar <- function(x,
                       groupName,
                       scoreName,
                       strataName = NULL,
-                      colorScheme = "whiteBlueGradient",
+                      colorScheme = "whiteBlue",
+                      colorScheme.reverse = F,
                       printNumbers = "count",
                       nCol = 1,
                       dir = "v",
@@ -174,6 +157,53 @@ grottaBar <- function(x,
   if(!is.null(args$textColour)){
     textColor <- args$textColour
   }
+
+  # Parse alternative inputs
+  if(!("ScaleDiscrete" %in% class(colorScheme))){
+    if(is.null(colorScheme)) colorScheme <- "none"
+    if(is.na(colorScheme)) colorScheme <- "none"
+    if(is.logical(colorScheme)){
+      if(!colorScheme){
+        colorScheme <- "none"
+      }
+    }
+  }
+
+
+  if(is.null(printNumbers)) printNumbers <- "none"
+  if(is.na(printNumbers)) printNumbers <- "none"
+  if(is.logical(printNumbers)){
+    if(!printNumbers){
+      printNumbers <- "none"
+    }
+  }
+
+
+  if(length(colorScheme) == 1 & is.character(colorScheme)){
+
+    if(colorScheme == "custom"){
+      warning("colorScheme = \"custom\" is depreciated. Please use colorScheme = \"none\", NA, NULL or FALSE instead.")
+      colorScheme <- "none"
+    }
+
+    if(colorScheme == "lowGreen"){
+      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RedYellowGreen\" and colorScheme.reverse=TRUE instead.")
+      colorScheme <- "RedYellowGreen"
+      colorScheme.reverse <- TRUE
+    }
+
+    if(colorScheme == "lowRed"){
+      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RedYellowGreen\" and colorScheme.reverse=FALSE instead.")
+      colorScheme <- "RedYellowGreen"
+      colorScheme.reverse <- FALSE
+    }
+
+    if(colorScheme == "grayscale"){
+      warning("colorScheme = \"grayscale\" is depreciated. Please use colorScheme=\"Grayscale\" instead.")
+      colorScheme <- "Grayscale"
+    }
+  }
+
 
   # This code draws heavily from aosmith's answer to the following question:
   # https://stackoverflow.com/questions/51213169/is-there-an-efficient-way-to-draw-lines-between-different-elements-in-a-stacked
@@ -295,26 +325,58 @@ grottaBar <- function(x,
   if("ScaleDiscrete" %in% class(colorScheme)){
 
     ggp <- ggp + colorScheme
+    fill_colours <- NULL
 
   } else {
 
-    if(colorScheme == "whiteBlueGradient"){
 
-      fill_colours <- colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+    if(length(colorScheme)>1 | !("character" %in% class(colorScheme))){
+      stop("colorScheme must be either a single character string or a ScaleDiscrete object.")
+    }
+
+    if ( !(colorScheme  %in% c("custom","none"))){
+      if(colorScheme == "whiteBlue"){
+
+        fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+
+      } else if(colorScheme=="RedYellowGreen"){
+
+        if(length(scoreLevels) <= 11){
+          fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"RdYlGn")
+        } else {
+          # Extend out the colour space if there's not enough in the pallette
+          fill_colours <- RColorBrewer::brewer.pal(11,"RdYlGn")
+
+          fill_colours <- unique(c(
+            grDevices::colorRampPalette(c(fill_colours[1],fill_colours[6]))(floor(length(scoreLevels)/2)+1),
+            grDevices::colorRampPalette(c(fill_colours[6],fill_colours[11]))(ceiling(length(scoreLevels)/2))
+          )
+          )
+        }
+
+      } else if (colorScheme %in% c("Grayscale","Greyscale")){
+
+        if(length(scoreLevels) <= 9){
+          fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"Greys")
+        } else {
+          # Extend out the colour space if there's not enough in the pallette
+          fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#000000"))(length(scoreLevels))
+        }
+
+      } else {
+        stop("colorScheme not recognised")
+      }
+
+      if(colorScheme.reverse){
+        fill_colours <- rev(fill_colours)
+      }
+
       names(fill_colours) <- scoreLevels
-
       ggp <- ggp + ggplot2::scale_fill_manual(values = fill_colours)
 
-    } else if(colorScheme=="lowGreen"){
-      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
-    } else if(colorScheme=="lowRed"){
-      ggp <- ggp + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
-    } else if  (colorScheme=="grayscale"){
-      ggp <- ggp + ggplot2::scale_fill_brewer(palette="Greys")
-    } else if ( colorScheme =="custom"){
-      # Do nothing, assume the user will handle this later.
     } else {
-      stop("colorScheme not recognised")
+      # This is needed so that textColor checks don't break later
+      fill_colours <- NULL
     }
 
   }
@@ -336,10 +398,11 @@ grottaBar <- function(x,
       return(color)
     })
 
-  } else if(is.null(textColor) & ("ScaleDiscrete" %in% class(fill_colours))) {
+  } else if(is.null(textColor) & ( ("ScaleDiscrete" %in% class(fill_colours)) | is.null(fill_colours))) {
     textColor <- "black"
   }
 
+  if(length(textColor) == 1 ) textColor <- rep(textColor,length(scoreLevels))
   names(textColor) <- scoreLevels
 
   for(this_color in unique(textColor)){

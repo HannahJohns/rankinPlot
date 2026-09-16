@@ -20,3 +20,23 @@
 #' \emph{The Lancet}, 375(9727), 1695-1703.
 #'
 "alteplase"
+
+#' Effect of hydrocortisone on mortality and organ support in patients with severe COVID-19
+#'
+#' A dataset reconstructing reported outcomes in severe COVID-19 as reported in Angus et al. (2020)
+#'
+#' @format A data frame with 379 rows and 6 variables:
+#' \describe{
+#'   \item{group}{The treatment group in the trial. uc = Usual Care, shock = Shock-dependent hydrocortisone, fixed = Fixed-dose hydrocortisone}
+#'   \item{deathTime}{Time of death, censored at 21 days}
+#'   \item{dischargeTime}{Time of ICU discharge, censored at 21 days}
+#'   \item{deathStatus}{If death was observed (0=no, 1=yes)}
+#'   \item{dischargeStatus}{If ICU discharde was observed (0=no, 1=yes)}
+#'   \item{score}{An ordinal score ranging from -1 to 21 covering death and organ support-free days }
+#' }
+#'
+#' @references Angus, Derek C., et al. "Effect of hydrocortisone on mortality and organ support in
+#' patients with severe COVID-19: the REMAP-CAP COVID-19 corticosteroid domain randomized
+#' clinical trial." Jama 324.13 (2020): 1317-1329.
+#'
+"remapcap"

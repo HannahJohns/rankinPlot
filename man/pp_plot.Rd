@@ -8,6 +8,7 @@ pp_plot(x,
         groupName,
         scoreName,
         strataName = NULL,
+        reverse.scores = F,
         panel = TRUE,
         panel.nCol = NULL,
         panel.dir = "h",
@@ -26,12 +27,13 @@ pp_plot(x,
         confint.level = 0.95,
         bar = TRUE,
         bar.colorScheme = "whiteBlueGradient",
+        bar.colorScheme.reverse = FALSE,
         bar.width = 0.1,
         bar.lineColor = "black",
         bar.linewidth =  0.5,
         bar.text = "count",
         bar.text.size = 5,
-        bar.text.color = "black",
+        bar.text.color = NULL,
         bar.text.face = "plain",
         neutral.color = "#222222",
         neutral.linetype = "dashed",
@@ -49,7 +51,8 @@ pp_plot(x,
 
 \item{scoreName}{a character string giving outcome labels}
 
-\item{strataName}{a character string giving the strata variable name}
+\item{strataName}{a character string giving the strata variable name
+reverse.scores = F,}
 
 \item{panel}{a logical indicating if strata should be separated across panels. If true, returns a faceted plot. If false, all strata are condensed into a single panel.}
 
@@ -86,6 +89,8 @@ pp_plot(x,
 \item{bar}{A logical indicating if bars should be drawn to indicate the distribution of the outcome in each group and strata.}
 
 \item{bar.colorScheme}{A character string indicating the colour scheme to use for the bars. See details.}
+
+\item{bar.colorScheme.reverse}{A logical  indicating if the colour scheme should be reversed.}
 
 \item{bar.width}{A numeric value indicating the width of the bars}
 
@@ -129,11 +134,10 @@ all confidence intervals should be drawn at 45 degrees, while "proportional.odds
 
 The tool provides the following options for \code{bar.colorScheme}:
 \itemize{
-    \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
-    \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
-    \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
-    \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
-    \item{\code{"none"}}{No scale is supplied and default ggplot2 fill colours are used}
+    \item{\code{"whiteBlue"}}{ A gradient from white to blue, where low scores are white}
+    \item{\code{"RedYellowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored red}
+    \item{\code{"Grayscale"}}{Grayscale coloring where low scores are colored light and high scores are colored dark}
+    \item{\code{"none", FALSE, NULL or NA}}{No scale is supplied and default ggplot2 fill colours are used}
 }
 
 In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
@@ -145,7 +149,7 @@ The options for \code{bar.text} are:
     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
     \item{\code{"count.percentage"}}{ The raw count with percentage in parentheses.}
-    \item{\code{"none"}}{ Do not print any numbers.}
+    \item{\code{"none", FALSE, NULL or NA}}{ Do not print any numbers.}
 }
 
 These options may be abbreviated. \code{"p"} is not a valid abbreviation as it matches to multiple options.
@@ -154,29 +158,94 @@ The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 \examples{
 
 df <- alteplase
-df$mRS <- df$mRS -1
+
 x <- table(mRS=df$mRS,
-           Group=df$treat,
-           Time=df$time)
+          Group=df$treat,
+          Time=df$time)
 
 pp_plot(x,
-groupName =  "Group",
-scoreName = "mRS",
-strataName = "Time",
-panel = TRUE,
-polygon.alpha = 0.3,
-line.color ="black"
+       groupName =  "Group",
+       scoreName = "mRS",
+       strataName = "Time",
+       panel = TRUE,
+       confint = TRUE
 )
+
 
 pp_plot(x,
-        groupName =  "Group",
-        scoreName = "mRS",
-        strataName = "Time",
-        panel = FALSE,
-        confint = FALSE,
-        line.linetype = "solid"
+       groupName =  "Group",
+       scoreName = "mRS",
+       strataName = "Time",
+       panel = FALSE,
+       confint = FALSE
 )
 
+
+df <- remapcap
+df <- df[which(df$group \%in\% c("uc","shock")),]
+df$group <-droplevels(df$group)
+
+x <- table(Score=df$score,
+          Group=df$group
+)
+
+
+
+pp_plot(x,groupName="Group",
+       scoreName = "Score",
+       reverse.scores = TRUE,
+       bar.text = FALSE,
+       confint.angle = "fixed",
+       bar.colorScheme = "RedYellowGreen",
+       bar.colorScheme.reverse = TRUE
+)
+
+# Visually inspect proportional odds assumption
+pp_plot(x,groupName="Group",
+       scoreName = "Score",
+       reverse.scores = TRUE,
+       bar.text = FALSE,
+       confint.angle = "proportional.odds",
+       bar.colorScheme = "RedYellowGreen",
+       bar.colorScheme.reverse = TRUE,
+       contour = TRUE,
+       polygon = FALSE,
+       neutral.color = "darkred", neutral.linewidth =1
+)
+
+
+
+# Transform the data for comparison of two arms against a common control arm
+
+df_shock <- remapcap[which(remapcap$group \%in\% c("uc","shock")),]
+df_fixed <- remapcap[which(remapcap$group \%in\% c("uc","fixed")),]
+
+df_shock$group2 <- ifelse(df_shock$group=="uc","Usual Care","Intervention")
+df_fixed$group2 <- ifelse(df_fixed$group=="uc","Usual Care","Intervention")
+df_shock$intervention <- "Shock"
+df_fixed$intervention <- "Fixed"
+
+df <- rbind(df_shock,df_fixed)
+df$group2 <- factor(df$group2,levels=c("Usual Care","Intervention"))
+
+
+x <- table(Score=df$score,
+          Group=df$group2,
+          Intervention=df$intervention
+)
+
+
+
+pp_plot(x,groupName="Group",
+       scoreName = "Score",
+       strataName = "Intervention",
+       reverse.scores = TRUE,
+       bar.text = FALSE,
+       confint= FALSE,
+       panel=FALSE,
+       bar.colorScheme = "RedYellowGreen",
+       bar.colorScheme.reverse = TRUE
+)
 }
 \references{
 Johns, Hannah, et al. "Practical guidance for Win Statistics and Tournament Methods for multifaceted outcomes in stroke research: Review and recommendations." International Journal of Stroke (2026) DOI: https://doi.org/10.1177/17474930261475853

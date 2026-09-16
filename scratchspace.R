@@ -1,16 +1,163 @@
 library(rankinPlot)
 
-rm(list=ls())
-
 df <- alteplase
-df$mRS <- df$mRS -1
+
 x <- table(mRS=df$mRS,
            Group=df$treat,
-           Time=ifelse(df$time %in% c("0-90","91-180"), "early", "late"))
+           Time=df$time)
+
+pp_plot(x,
+        groupName =  "Group",
+        scoreName = "mRS",
+        strataName = "Time",
+        # bar.colorScheme = F,
+        panel = T,
+        confint = T
+)
+
+
+pp_plot(x,
+        groupName =  "Group",
+        scoreName = "mRS",
+        strataName = "Time",
+        # bar.colorScheme = F,
+        panel = F,
+        confint = F
+)
+
+
+df <- remapcap
+df <- df[which(df$group %in% c("uc","shock")),]
+df$group <-droplevels(df$group)
+
+x <- table(Score=df$score,
+           Group=df$group
+)
+
+
+
+pp_plot(x,groupName="Group",
+        scoreName = "Score",
+        reverse.scores = T,
+        bar.text = F,
+        confint.angle = "fixed",
+        bar.colorScheme = "RedYellowGreen",
+        bar.colorScheme.reverse = T
+)
+
+# Visually inspect proportional odds assumption
+pp_plot(x,groupName="Group",
+          scoreName = "Score",
+        reverse.scores = T,
+        bar.text = F,
+        confint.angle = "proportional.odds",
+        bar.colorScheme = "RedYellowGreen",
+        bar.colorScheme.reverse = T,
+        contour = T,
+        polygon = F,
+        neutral.color = "darkred", neutral.linewidth =1
+)
+
+
+
+# Transform the data for comparison of two arms against a common control arm
+
+df_shock <- remapcap[which(remapcap$group %in% c("uc","shock")),]
+df_fixed <- remapcap[which(remapcap$group %in% c("uc","fixed")),]
+
+df_shock$group2 <- ifelse(df_shock$group=="uc","Usual Care","Intervention")
+df_fixed$group2 <- ifelse(df_fixed$group=="uc","Usual Care","Intervention")
+df_shock$intervention <- "Shock"
+df_fixed$intervention <- "Fixed"
+
+df <- rbind(df_shock,df_fixed)
+df$group2 <- factor(df$group2,levels=c("Usual Care","Intervention"))
+
+
+x <- table(Score=df$score,
+           Group=df$group2,
+           Intervention=df$intervention
+)
+
+
+
+pp_plot(x,groupName="Group",
+        scoreName = "Score",
+        strataName = "Intervention",
+        reverse.scores = T,
+        bar.text = F,
+        confint= F,
+        panel=F,
+        bar.colorScheme = "RedYellowGreen",
+        bar.colorScheme.reverse = T
+)
+
+
+
+
+
+
+
+
+
+
+pp_plot(x,groupName="Time",
+          scoreName = "mRS",
+          strataName="Group",
+          textColor = c(rep("black",4),rep("white",3))
+)
+
+
+x <- table(mRS=df$mRS,
+           Group=df$treat)
+
+
+pp_plot(x,groupName="Group",
+          scoreName = "mRS",
+        bar.colorScheme = FALSE
+)
+
+pp_plot(x,groupName="Group",
+          scoreName = "mRS",
+          bar.colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+)
+
+
+pp_plot(x,groupName="Group",
+          scoreName = "mRS",
+          bar.colorScheme = FALSE
+)+ ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+
+
+
+pp_plot(x,groupName="Group",
+          scoreName = "mRS",
+          printNumbers = "count.percentage",
+          bar.colorScheme = "Grayscale"
+)
+
+
+
+
+
+
+df <- alteplase
+
+x <- table(mRS=df$mRS,
+           Group=df$treat
+)
            # Time=df$time)
 
-# %in% c("0-90","91-180"), "early", "late")
-#            Time=ifelse(df$time %in% c("0-90","91-180"), "early", "late"))
+grottaBar(x,
+          groupName =  "Group",
+          scoreName = "mRS"
+          )
+
+
+x <- table(mRS=df$mRS,
+           Group=df$treat,
+           Time  = df$time
+)
 
 
 grottaBar(x,
@@ -20,20 +167,54 @@ grottaBar(x,
 )
 
 
+
+
+
+
+
+
+
+# %in% c("0-90","91-180"), "early", "late")
+#            Time=ifelse(df$time %in% c("0-90","91-180"), "early", "late"))
+
+df <- remapcap
+# df$score <- factor(df$score,levels = rev(levels(df$score)))
+x <- table(Score=df$score,
+           Group=df$group
+           )
+
+grottaBar(x,
+          groupName =  "Group",
+          scoreName = "Score",
+          colorScheme = "lowRed"
+)
+
+df <- df[which(df$group %in% c("uc","shock")),]
+
+# pp_plot assumes low values are good. This behaviour probably needs fixed
+
+x <- table(Score=df$score,
+           Group=droplevels(df$group)
+)
+
+
 pp_plot(x,
         groupName =  "Group",
-        scoreName = "mRS",
-        strataName = "Time",
+        scoreName = "Score",
         panel = F,
         polygon.alpha = 0.3,
-        confint = T, bar.width = 0.05
-        # line.color="black",
-        # line.linetype = ggplot2::scale_linetype(),
-        # bar.colorScheme = "grayscale",
-        # bar.text.color = c(rep("black",5),rep("white",2)),
-        # contour = T,
-        # contour.color = "#CCC"
+        contour = T,
+        confint = T,
+        confint.angle = "proportional.odds",
+        bar.width = 0.05,
+        bar.text="none",
+        bar.colorScheme = "RedYellowGreen",
+        bar.colorScheme.reverse = T,
+        reverse.scores = T
 )
+
+
+
 
 
 pp_plot(x,

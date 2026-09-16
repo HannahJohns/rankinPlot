@@ -9,13 +9,14 @@ License: GPL (>=2.0)
 Encoding: UTF-8
 LazyData: true
 Depends:
-    R (>= 2.10)
+    R (>= 3.5)
 Imports:
     ggplot2 (>= 4.0),
     scales (>= 1.2),
-    rlang
+    rlang,
+    grDevices,
+    RColorBrewer
 Suggests: 
     viridis
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.2
-

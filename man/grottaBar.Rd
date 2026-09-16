@@ -11,7 +11,7 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
           width = 0.9,
           textSize = 15, numberSize = 5,
           textFace = "plain",
-          textColor = "black",
+          textColor = NULL,
           lineSize = 0.5,
           lineColor = "black",
           drawLines = TRUE,
@@ -29,6 +29,8 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
 \item{strataName}{a character string giving the strata variable name}
 
 \item{colorScheme}{a character string indicating the colors that should be used by the plot, or a discrete fill scale returned by ggplot2.}
+
+\item{colorScheme.reverse}{A logical  indicating if the colour scheme should be reversed.}
 
 \item{printNumbers}{a character string indicating if numbers should be printed for each category.}
 
@@ -94,72 +96,54 @@ The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 }
 \examples{
 
+
+
 df <- alteplase
-df$mRS <- df$mRS -1
+
 x <- table(mRS=df$mRS,
-           Group=df$treat,
-           Time=df$time)
+          Group=df$treat,
+          Time=df$time)
 
 grottaBar(x,groupName="Group",
-          scoreName = "mRS",
-          strataName="Time",
-          colorScheme ="lowGreen"
- )
+         scoreName = "mRS",
+         strataName="Time"
+)
 
-  grottaBar(x,groupName="Time",
-          scoreName = "mRS",
-          strataName="Group",
-          textColor = c(rep("black",4),rep("white",3))
- )
+
+grottaBar(x,groupName="Time",
+         scoreName = "mRS",
+         strataName="Group",
+         textColor = c(rep("black",4),rep("white",3))
+)
+
 
 x <- table(mRS=df$mRS,
           Group=df$treat)
 
-   grottaBar(x,groupName="Group",
-             scoreName = "mRS",
-             colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
-   )
 
-   grottaBar(x,groupName="Group",
-             scoreName = "mRS",
-             colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
-   )
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         colorScheme = FALSE
+)
 
-   grottaBar(x,groupName="Group",
-             scoreName = "mRS",
-             colorScheme ="custom"
-   ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
-
-
-  grottaBar(x,groupName="Group",
-          scoreName = "mRS",
-          colorScheme ="custom",
-          textFace = "italic",
-          printNumbers = "count.percentage"
- ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
-
-
-grottaBar(
-          x,
-          groupName = "Group",
-          scoreName = "mRS",
-          colorScheme = "custom",
-          textFace = "italic",
-          printNumbers = "count.percentage"
-) + viridis::scale_fill_viridis(discrete = TRUE, direction = -1)
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+)
 
 
 grottaBar(x,groupName="Group",
-           scoreName = "mRS",
-           colorScheme ="custom",
-           textFace = "italic",
-           textColor = c("black","white"),
-           lineColor = "white",
-           textCut = 5,
-           printNumbers = "count.percentage"
-) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+         scoreName = "mRS",
+         colorScheme = FALSE
+)+ ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 
 
+
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         printNumbers = "count.percentage",
+         colorScheme = "Grayscale"
+)
 }
 \references{
 National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group. "Tissue plasminogen activator for acute ischemic stroke." New England Journal of Medicine 333.24 (1995): 1581-1588.

@@ -9,6 +9,7 @@
 #'         groupName,
 #'         scoreName,
 #'         strataName = NULL,
+#'         reverse.scores = F,
 #'         panel = TRUE,
 #'         panel.nCol = NULL,
 #'         panel.dir = "h",
@@ -27,6 +28,7 @@
 #'         confint.level = 0.95,
 #'         bar = TRUE,
 #'         bar.colorScheme = "whiteBlueGradient",
+#'         bar.colorScheme.reverse = FALSE,
 #'         bar.width = 0.1,
 #'         bar.lineColor = "black",
 #'         bar.linewidth =  0.5,
@@ -47,6 +49,7 @@
 #' @param groupName a character string giving the name of the group variable
 #' @param scoreName a character string giving outcome labels
 #' @param strataName a character string giving the strata variable name
+#'                     reverse.scores = F,
 #' @param panel a logical indicating if strata should be separated across panels. If true, returns a faceted plot. If false, all strata are condensed into a single panel.
 #' @param panel.nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used or panel is false.
 #' @param panel.dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}. Has no effect if no stratification is used or panel is false.
@@ -65,6 +68,7 @@
 #' @param confint.level A numeric value indicating the level of confidence for the confidence interval.
 #' @param bar A logical indicating if bars should be drawn to indicate the distribution of the outcome in each group and strata.
 #' @param bar.colorScheme A character string indicating the colour scheme to use for the bars. See details.
+#' @param bar.colorScheme.reverse A logical  indicating if the colour scheme should be reversed.
 #' @param bar.width A numeric value indicating the width of the bars
 #' @param bar.lineColor A character string indicating the colour of the bar borders.
 #' @param bar.linewidth A numeric value  indicating the width of the bar borders.
@@ -88,11 +92,10 @@
 #'
 #' The tool provides the following options for \code{bar.colorScheme}:
 #' \itemize{
-#'     \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
-#'     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
-#'     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
-#'     \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
-#'     \item{\code{"none"}}{No scale is supplied and default ggplot2 fill colours are used}
+#'     \item{\code{"whiteBlue"}}{ A gradient from white to blue, where low scores are white}
+#'     \item{\code{"RedYellowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored red}
+#'     \item{\code{"Grayscale"}}{Grayscale coloring where low scores are colored light and high scores are colored dark}
+#'     \item{\code{"none", FALSE, NULL or NA}}{No scale is supplied and default ggplot2 fill colours are used}
 #' }
 #'
 #' In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
@@ -104,7 +107,7 @@
 #'     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
 #'     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
 #'     \item{\code{"count.percentage"}}{ The raw count with percentage in parentheses.}
-#'     \item{\code{"none"}}{ Do not print any numbers.}
+#'     \item{\code{"none", FALSE, NULL or NA}}{ Do not print any numbers.}
 #' }
 #'
 #' These options may be abbreviated. \code{"p"} is not a valid abbreviation as it matches to multiple options.
@@ -118,34 +121,101 @@
 #'
 #' @examples
 #'
-#' df <- alteplase
-#' df$mRS <- df$mRS -1
-#' x <- table(mRS=df$mRS,
-#'            Group=df$treat,
-#'            Time=df$time)
+#'df <- alteplase
+#'
+#'x <- table(mRS=df$mRS,
+#'           Group=df$treat,
+#'           Time=df$time)
 #'
 #'pp_plot(x,
-#' groupName =  "Group",
-#' scoreName = "mRS",
-#' strataName = "Time",
-#' panel = TRUE,
-#' polygon.alpha = 0.3,
-#' line.color ="black"
-#' )
+#'        groupName =  "Group",
+#'        scoreName = "mRS",
+#'        strataName = "Time",
+#'        panel = TRUE,
+#'        confint = TRUE
+#')
 #'
-#' pp_plot(x,
-#'         groupName =  "Group",
-#'         scoreName = "mRS",
-#'         strataName = "Time",
-#'         panel = FALSE,
-#'         confint = FALSE,
-#'         line.linetype = "solid"
-#' )
 #'
+#'pp_plot(x,
+#'        groupName =  "Group",
+#'        scoreName = "mRS",
+#'        strataName = "Time",
+#'        panel = FALSE,
+#'        confint = FALSE
+#')
+#'
+#'
+#'df <- remapcap
+#'df <- df[which(df$group %in% c("uc","shock")),]
+#'df$group <-droplevels(df$group)
+#'
+#'x <- table(Score=df$score,
+#'           Group=df$group
+#')
+#'
+#'
+#'
+#'pp_plot(x,groupName="Group",
+#'        scoreName = "Score",
+#'        reverse.scores = TRUE,
+#'        bar.text = FALSE,
+#'        confint.angle = "fixed",
+#'        bar.colorScheme = "RedYellowGreen",
+#'        bar.colorScheme.reverse = TRUE
+#')
+#'
+#'# Visually inspect proportional odds assumption
+#'pp_plot(x,groupName="Group",
+#'        scoreName = "Score",
+#'        reverse.scores = TRUE,
+#'        bar.text = FALSE,
+#'        confint.angle = "proportional.odds",
+#'        bar.colorScheme = "RedYellowGreen",
+#'        bar.colorScheme.reverse = TRUE,
+#'        contour = TRUE,
+#'        polygon = FALSE,
+#'        neutral.color = "darkred", neutral.linewidth =1
+#')
+#'
+#'
+#'
+#'# Transform the data for comparison of two arms against a common control arm
+#'
+#'df_shock <- remapcap[which(remapcap$group %in% c("uc","shock")),]
+#'df_fixed <- remapcap[which(remapcap$group %in% c("uc","fixed")),]
+#'
+#'df_shock$group2 <- ifelse(df_shock$group=="uc","Usual Care","Intervention")
+#'df_fixed$group2 <- ifelse(df_fixed$group=="uc","Usual Care","Intervention")
+#'df_shock$intervention <- "Shock"
+#'df_fixed$intervention <- "Fixed"
+#'
+#'df <- rbind(df_shock,df_fixed)
+#'df$group2 <- factor(df$group2,levels=c("Usual Care","Intervention"))
+#'
+#'
+#'x <- table(Score=df$score,
+#'           Group=df$group2,
+#'           Intervention=df$intervention
+#')
+#'
+#'
+#'
+#'pp_plot(x,groupName="Group",
+#'        scoreName = "Score",
+#'        strataName = "Intervention",
+#'        reverse.scores = TRUE,
+#'        bar.text = FALSE,
+#'        confint= FALSE,
+#'        panel=FALSE,
+#'        bar.colorScheme = "RedYellowGreen",
+#'        bar.colorScheme.reverse = TRUE
+#')
 pp_plot <- function(x,
                     groupName,
                     scoreName,
                     strataName = NULL,
+
+                    reverse.scores = FALSE,
 
                     panel = TRUE,
                     panel.nCol = NULL,
@@ -168,7 +238,8 @@ pp_plot <- function(x,
                     confint.level = 0.95,
 
                     bar = TRUE,
-                    bar.colorScheme = "whiteBlueGradient",
+                    bar.colorScheme = "whiteBlue",
+                    bar.colorScheme.reverse = F,
                     bar.width = 0.1,
                     bar.lineColor = "black",
                     bar.linewidth =  0.5,
@@ -194,13 +265,66 @@ pp_plot <- function(x,
   # Allow British English spelling of "color"
   args <- list(...)
 
-  if(!is.null(args$colourScheme)){
-    colorScheme <- args$colourScheme
+  if(!is.null(args$polygon.colour)){
+    polygon.color <- args$polygon.colour
   }
 
-  if(!is.null(args$textColour)){
-    textColor <- args$textColour
+  if(!is.null(args$contour.color)){
+    contour.color <- args$contour.colour
   }
+
+  if(!is.null(args$contour.line.colour)){
+    contour.line.color <- args$contour.line.colour
+  }
+
+  if(!is.null(args$contour.label.colour)){
+    contour.label.color <- args$contour.label.colour
+  }
+
+  if(!is.null(args$bar.colourScheme)){
+    bar.colorScheme <- args$bar.colourScheme
+  }
+  if(!is.null(args$bar.colourScheme.reverse)){
+    bar.colorScheme.reverse <- args$bar.colourScheme.reverse
+  }
+
+  if(!is.null(args$bar.lineColour)){
+    bar.lineColor <- args$bar.lineColour
+  }
+
+  if(!is.null(args$bar.text.color)){
+    bar.text.color <- args$bar.text.color
+  }
+
+  if(!is.null(args$neutral.colour)){
+    neutral.color <- args$neutral.colour
+  }
+
+  if(!is.null(args$line.colour)){
+    line.color <- args$line.colour
+  }
+
+
+
+  # Parse alternative inputs for "none"
+  if(!("ScaleDiscrete" %in% class(bar.colorScheme))){
+    if(is.null(bar.colorScheme)) bar.colorScheme <- "none"
+    if(is.na(bar.colorScheme)) bar.colorScheme <- "none"
+    if(is.logical(bar.colorScheme)){
+      if(!bar.colorScheme){
+        bar.colorScheme <- "none"
+      }
+    }
+  }
+
+  if(is.null(bar.text)) bar.text <- "none"
+  if(is.na(bar.text)) bar.text <- "none"
+  if(is.logical(bar.text)){
+    if(!bar.text){
+      bar.text <- "none"
+    }
+  }
+
 
   x <- as.data.frame(x)
 
@@ -273,6 +397,12 @@ pp_plot <- function(x,
   # a character concatenation of strata and score. This causes problems later,
   # because the code below assumes that x is ordered according to factors.
   # Correcting the order after the fact is the simplest fix.
+
+  if(reverse.scores){
+    x$score <- factor(x$score,levels=rev(levels(x$score)))
+    scoreLevels <- rev(scoreLevels)
+  }
+
   x <- x[order(x$score),]
 
   rownames(x) <- NULL
@@ -634,39 +764,60 @@ pp_plot <- function(x,
     if("ScaleDiscrete" %in% class(bar.colorScheme)){
 
       out <- out + bar.colorScheme
+      fill_colours <- NULL
 
     } else {
 
-      if(bar.colorScheme == "whiteBlueGradient"){
-
-        fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
-        names(fill_colours) <- scoreLevels
-
-        out <- out + ggplot2::scale_fill_manual(values = fill_colours)
-
-      } else if(bar.colorScheme=="lowGreen"){
-
-        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = -1)
-
-      } else if(bar.colorScheme=="lowRed"){
-
-        out <- out + ggplot2::scale_fill_brewer(palette="RdYlGn",direction = 1)
-
-      } else if  (bar.colorScheme %in% c("grayscale","greyscale")){
-
-        out <- out + ggplot2::scale_fill_brewer(palette="Greys")
-
-      } else if (bar.colorScheme =="custom"){
-
-        # Do nothing, assume the user will handle this later.
-
-      } else {
-
-        stop("colorScheme not recognised")
-
+      if(length(bar.colorScheme)>1 | !("character" %in% class(bar.colorScheme))){
+        stop("bar.colorScheme must be either a single character string or a ScaleDiscrete object.")
       }
 
+      if ( !(bar.colorScheme  %in% c("custom","none"))){
+
+        if(bar.colorScheme == "whiteBlue"){
+
+          fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+
+        } else if(bar.colorScheme=="RedYellowGreen"){
+
+          if(length(scoreLevels) <= 11){
+            fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"RdYlGn")
+          } else {
+            # Extend out the colour space if there's not enough in the pallette
+            fill_colours <- RColorBrewer::brewer.pal(11,"RdYlGn")
+
+            fill_colours <- unique(c(
+              grDevices::colorRampPalette(c(fill_colours[1],fill_colours[6]))(floor(length(scoreLevels)/2)+1),
+              grDevices::colorRampPalette(c(fill_colours[6],fill_colours[11]))(ceiling(length(scoreLevels)/2))
+            )
+            )
+          }
+
+        } else if (bar.colorScheme %in% c("Grayscale","Greyscale")){
+
+          if(length(scoreLevels) <= 9){
+            fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"Greys")
+          } else {
+            # Extend out the colour space if there's not enough in the pallette
+            fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#000000"))(length(scoreLevels))
+          }
+
+        } else {
+          stop("bar.colorScheme not recognised")
+        }
+
+        if(bar.colorScheme.reverse){
+          fill_colours <- rev(fill_colours)
+        }
+
+        names(fill_colours) <- scoreLevels
+        out <- out + ggplot2::scale_fill_manual(values = fill_colours)
+
+      } else {
+        fill_colours <- NULL
+      }
     }
+
 
     if(is.null(bar.text.color) & ("character" %in% class(fill_colours)) & !("ScaleDiscrete" %in% class(fill_colours))){
 
@@ -684,17 +835,17 @@ pp_plot <- function(x,
         return(color)
       })
 
-    } else if(is.null(bar.text.color) & ("ScaleDiscrete" %in% class(fill_colours))) {
+    } else if(is.null(bar.text.color) & ( ("ScaleDiscrete" %in% class(fill_colours)) | is.null(fill_colours)) ) {
       bar.text.color <- "black"
     }
 
-
-
-
+    if(length(bar.text.color) == 1 ) bar.text.color <- rep(bar.text.color,length(scoreLevels))
+    names(bar.text.color) <- scoreLevels
 
     # Because colour aesthetic is reserved for strata in this plot,
     # we need to draw different grobs for different text colours.
-    # Hadley Wickham would likely disapprove.
+    # This is a flagrant violation of the one variable per aesthetic mapping
+    # principle that ggplot2 is built on but it works.
 
     for(this_color in unique(bar.text.color)){
 
