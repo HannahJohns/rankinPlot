@@ -8,7 +8,7 @@ pp_plot(x,
         groupName,
         scoreName,
         strataName = NULL,
-        reverse.scores = F,
+        reverse.scores = FALSE,
         panel = TRUE,
         panel.nCol = NULL,
         panel.dir = "h",
@@ -26,7 +26,7 @@ pp_plot(x,
         confint.angle = "fixed",
         confint.level = 0.95,
         bar = TRUE,
-        bar.colorScheme = "whiteBlueGradient",
+        bar.colorScheme = "whiteBlue",
         bar.colorScheme.reverse = FALSE,
         bar.width = 0.1,
         bar.lineColor = "black",
@@ -51,8 +51,9 @@ pp_plot(x,
 
 \item{scoreName}{a character string giving outcome labels}
 
-\item{strataName}{a character string giving the strata variable name
-reverse.scores = F,}
+\item{strataName}{a character string giving the strata variable name}
+
+\item{reverse.scores}{a logical indicating if the order of the scores should be reversed on the plot}
 
 \item{panel}{a logical indicating if strata should be separated across panels. If true, returns a faceted plot. If false, all strata are condensed into a single panel.}
 
@@ -133,7 +134,7 @@ points correspond to cumulative probabilities that match the upper/lower bound o
 all confidence intervals should be drawn at 45 degrees, while "proportional.odds" indicates that they should be drawn perpendicular to the proportional odds contour line.
 
 The tool provides the following options for \code{bar.colorScheme}:
-\itemize{
+\describe{
     \item{\code{"whiteBlue"}}{ A gradient from white to blue, where low scores are white}
     \item{\code{"RedYellowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored red}
     \item{\code{"Grayscale"}}{Grayscale coloring where low scores are colored light and high scores are colored dark}
@@ -144,7 +145,7 @@ In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot
 user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 
 The options for \code{bar.text} are:
-\itemize{
+\describe{
     \item{\code{"count"}}{ The raw counts in the table.}
     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}

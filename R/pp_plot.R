@@ -9,7 +9,7 @@
 #'         groupName,
 #'         scoreName,
 #'         strataName = NULL,
-#'         reverse.scores = F,
+#'         reverse.scores = FALSE,
 #'         panel = TRUE,
 #'         panel.nCol = NULL,
 #'         panel.dir = "h",
@@ -27,7 +27,7 @@
 #'         confint.angle = "fixed",
 #'         confint.level = 0.95,
 #'         bar = TRUE,
-#'         bar.colorScheme = "whiteBlueGradient",
+#'         bar.colorScheme = "whiteBlue",
 #'         bar.colorScheme.reverse = FALSE,
 #'         bar.width = 0.1,
 #'         bar.lineColor = "black",
@@ -49,7 +49,7 @@
 #' @param groupName a character string giving the name of the group variable
 #' @param scoreName a character string giving outcome labels
 #' @param strataName a character string giving the strata variable name
-#'                     reverse.scores = F,
+#' @param reverse.scores a logical indicating if the order of the scores should be reversed on the plot
 #' @param panel a logical indicating if strata should be separated across panels. If true, returns a faceted plot. If false, all strata are condensed into a single panel.
 #' @param panel.nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used or panel is false.
 #' @param panel.dir a character indicating if stratified results should be laid out vertically (\code{"v"}) or horizontally \code{"h"}. Has no effect if no stratification is used or panel is false.
@@ -91,7 +91,7 @@
 #' all confidence intervals should be drawn at 45 degrees, while "proportional.odds" indicates that they should be drawn perpendicular to the proportional odds contour line.
 #'
 #' The tool provides the following options for \code{bar.colorScheme}:
-#' \itemize{
+#' \describe{
 #'     \item{\code{"whiteBlue"}}{ A gradient from white to blue, where low scores are white}
 #'     \item{\code{"RedYellowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored red}
 #'     \item{\code{"Grayscale"}}{Grayscale coloring where low scores are colored light and high scores are colored dark}
@@ -102,7 +102,7 @@
 #' user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 #'
 #' The options for \code{bar.text} are:
-#' \itemize{
+#' \describe{
 #'     \item{\code{"count"}}{ The raw counts in the table.}
 #'     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
 #'     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
@@ -239,7 +239,7 @@ pp_plot <- function(x,
 
                     bar = TRUE,
                     bar.colorScheme = "whiteBlue",
-                    bar.colorScheme.reverse = F,
+                    bar.colorScheme.reverse = FALSE,
                     bar.width = 0.1,
                     bar.lineColor = "black",
                     bar.linewidth =  0.5,
@@ -261,6 +261,12 @@ pp_plot <- function(x,
 
   # Used in the main PP plot and strata labels
   aes_wrapper <- function(...){ggplot2::aes(...)}
+
+  # Values used by aes() calls.
+  # Only really here to silence a note about visible bindings
+  xmin <- xmax <- ymin <- ymax <- score_1 <- score_2 <- y <- qc <- r <- barMin <- barMax <- xcount <- ycount <- NULL
+
+
 
   # Allow British English spelling of "color"
   args <- list(...)
@@ -338,10 +344,10 @@ pp_plot <- function(x,
   # Dummy code strata if it doesn't exist
   if(!("strata" %in% colnames(x))){
     x <- cbind(strata="",x)
-    x$strata <- factor(x$strata)
+    x[,"strata"] <- factor(x[,"strata"])
   }
 
-  strataLevels <- levels(x$strata)
+  strataLevels <- levels(x[,"strata"])
   scoreLevels <- levels(x$score)
 
   # Get default options
@@ -355,7 +361,7 @@ pp_plot <- function(x,
   }
 
   # Get proportions. This has to be done by strata.
-  x <- by(x,x$strata,function(x){
+  x <- by(x,x[,"strata"],function(x){
 
     x$p <- x$n
 
@@ -380,8 +386,8 @@ pp_plot <- function(x,
 
   # We need the data in wide format
 
-  x <- do.call("rbind",by(x,paste(x$strata,x$score), function(x){
-    data.frame(strata=unique(x$strata),
+  x <- do.call("rbind",by(x,paste(x[,"strata"],x$score), function(x){
+    data.frame(strata=unique(x[,"strata"]),
                score = unique(x$score),
                n_1 = x$n[x$group==1],
                p_1 = x$p[x$group==1],
@@ -391,7 +397,7 @@ pp_plot <- function(x,
                p_prev_2 = x$p_prev[x$group==2]
                )
   }))
-  x$strata <- factor(x$strata,strataLevels)
+  x[,"strata"] <- factor(x[,"strata"],strataLevels)
 
   # The above busts the ordering of factors because it's looping over
   # a character concatenation of strata and score. This causes problems later,
@@ -412,8 +418,8 @@ pp_plot <- function(x,
   oddsCurve <- function(x,r) r*x/((r-1)*x + 1)
   oddsCurve_x <- function(x,r) r/((r-1)*x+1)^2 # First derivative with respect to x
 
-  # x_strata <- x[x$strata==x$strata[1],]
-  results_by_strata <- by(x,x$strata,function(x_strata){
+  # x_strata <- x[x[,"strata"]==x[,"strata"][1],]
+  results_by_strata <- by(x,x[,"strata"],function(x_strata){
 
     p0 <- x_strata$p_1
     p1 <- x_strata$p_2
@@ -631,8 +637,8 @@ pp_plot <- function(x,
 
 
     winShape <- rbind(
-      data.frame(x=tieGrid$xmax,y=tieGrid$ymax),
-      data.frame(x=tieGrid$xmax,y=tieGrid$ymin)
+      data.frame(x=tieGrid[,"xmax"],y=tieGrid[,"ymax"]),
+      data.frame(x=tieGrid[,"xmax"],y=tieGrid[,"ymin"])
     )
     winShape <- winShape[order(winShape$x,winShape$y),]
 
@@ -642,9 +648,10 @@ pp_plot <- function(x,
     )
 
     lossShape <- rbind(
-      data.frame(x=tieGrid$xmin,y=tieGrid$ymax),
-      data.frame(x=tieGrid$xmin,y=tieGrid$ymin)
+      data.frame(x=tieGrid[,"xmin"],y=tieGrid[,"ymax"]),
+      data.frame(x=tieGrid[,"xmin"],y=tieGrid[,"ymin"])
     )
+
     lossShape <- lossShape[order(lossShape$x,lossShape$y),]
     lossShape <- rbind(
       lossShape,
@@ -654,14 +661,15 @@ pp_plot <- function(x,
 
     # Add strata information to all data frames
 
-    tieGrid$strata <- unique(x_strata$strata)
-    winShape$strata <- unique(x_strata$strata)
-    lossShape$strata <- unique(x_strata$strata)
-    contour_df$strata <- unique(x_strata$strata)
-    contour_df_label$strata <- unique(x_strata$strata)
-    allPoints$strata <- unique(x_strata$strata)
-    # contour_df_odds$strata <- unique(x_strata$strata)
-    odds$strata <- unique(x_strata$strata)
+
+    tieGrid[,"strata"] <- unique(x_strata[,"strata"])
+    winShape[,"strata"] <- unique(x_strata[,"strata"])
+    lossShape[,"strata"] <- unique(x_strata[,"strata"])
+    contour_df[,"strata"] <- unique(x_strata[,"strata"])
+    contour_df_label[,"strata"] <- unique(x_strata[,"strata"])
+    allPoints[,"strata"] <- unique(x_strata[,"strata"])
+    # contour_df_odds[,"strata"] <- unique(x_strata[,"strata"])
+    odds[,"strata"] <- unique(x_strata[,"strata"])
 
     return(list(
       tieGrid = tieGrid,
@@ -677,14 +685,14 @@ pp_plot <- function(x,
 
   })
 
-  tieGrid <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$tieGrid}))
-  winShape  <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$winShape}))
-  lossShape <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$lossShape}))
-  contour_df <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df}))
-  contour_df_label <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df_label}))
-  allPoints <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$allPoints}))
+  tieGrid <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp[["tieGrid"]]}))
+  winShape  <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp[["winShape"]]}))
+  lossShape <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp[["lossShape"]]}))
+  contour_df <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp[["contour_df"]]}))
+  contour_df_label <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp[["contour_df_label"]]}))
+  allPoints <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp[["allPoints"]]}))
   # contour_df_odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$contour_df_odds}))
-  odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp$odds}))
+  odds <- do.call("rbind",lapply(results_by_strata, function(tmp){tmp[["odds"]]}))
 
   out <- ggplot2::ggplot()
 
@@ -734,15 +742,15 @@ pp_plot <- function(x,
   # Draw bars
   if(bar){
 
-    if(panel | length(unique(x$strata))==1){
+    if(panel | length(unique(x[,"strata"]))==1){
 
-      tieGrid$barMin <- -bar.width
+      tieGrid[,"barMin"] <- -bar.width
       tieGrid$barMax <- 0
 
     } else {
 
-      tieGrid$barMin <- -bar.width * as.numeric(tieGrid$strata)
-      tieGrid$barMax <- tieGrid$barMin+bar.width
+      tieGrid[,"barMin"] <- -bar.width * as.numeric(tieGrid[,"strata"])
+      tieGrid$barMax <- tieGrid[,"barMin"]+bar.width
 
     }
 
@@ -959,7 +967,7 @@ pp_plot <- function(x,
     # Only do it if we're not panelling (where it's shown in the facet label)
     # AND there's more than one stratum.
 
-    if(!panel & length(unique(x$strata))>1){
+    if(!panel & length(unique(x[,"strata"]))>1){
 
       segment_horiz_aes <- list(
         x=rlang::sym("position"),
@@ -1028,7 +1036,7 @@ pp_plot <- function(x,
 
       # Feeding through the position without naming it was causing problems
       strataLabel_data <- unique(tieGrid[,c("strata","barMin","barMax")])
-      strataLabel_data$position <- (strataLabel_data$barMin + strataLabel_data$barMax)/2
+      strataLabel_data$position <- (strataLabel_data[,"barMin"] + strataLabel_data$barMax)/2
 
       out <- out + do.call(function(...){ggplot2::geom_segment(data= strataLabel_data,
                                                                segment_horiz_aes,
@@ -1176,7 +1184,7 @@ pp_plot <- function(x,
       aspect.ratio = 1
     )
 
-  if(panel & length(unique(x$strata)) > 1){
+  if(panel & length(unique(x[,"strata"])) > 1){
     out <- out + ggplot2::facet_wrap(~strata, ncol = panel.nCol, dir = panel.dir)
   }
 

@@ -5,7 +5,8 @@
 \title{grottaBar}
 \usage{
 grottaBar(x,groupName,scoreName,strataName = NULL,
-          colorScheme="whiteBlueGradient",
+          colorScheme="whiteBlue",
+          colorScheme.reverse = FALSE,
           printNumbers = "count",
           nCol = 1, dir = "v",
           width = 0.9,
@@ -71,7 +72,7 @@ chart showing the distribution of ordinal outcome data (typically the modified R
 categories across groups.
 
 The tool provides the following options for \code{colorScheme}:
-\itemize{
+\describe{
     \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
@@ -83,7 +84,7 @@ In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot
 user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 
 The options for \code{printNumbers} are:
-\itemize{
+\describe{
     \item{\code{"count"}}{ The raw counts in the table.}
     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
@@ -95,7 +96,6 @@ These options may be abbreviated. \code{"p"} is not a valid abbreviation as it m
 The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 }
 \examples{
-
 
 
 df <- alteplase
