@@ -5,8 +5,6 @@
 # John R Marler, Scott A Hamilton, Barbara C Tilley, Stephen M Davis, Geoff rey A Donnan, Werner Hacke, for the ECASS, ATLANTIS, NINDS, and
 # EPITHET rt-PA Study Group Investigators*
 
-
-
 library(tidyverse)
 
 data.frame(
@@ -28,7 +26,12 @@ data.frame(
   }) %>% do.call("rbind",.) %>%
   mutate(mRS=factor(mRS,
                     levels=paste("r",6:0,sep=""),
-                    labels=6:0))  -> alteplase
+                    labels=6:0),
+         mRS = as.numeric(as.character(mRS))
+         )  -> alteplase
+
+alteplase$treat <- factor(alteplase$treat,levels = c("Placebo","Alteplase"))
+alteplase$time <- factor(alteplase$time,levels = c("0-90","91-180","181-270","271-360"))
 
 usethis::use_data(alteplase, overwrite = TRUE)
 

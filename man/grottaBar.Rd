@@ -5,14 +5,17 @@
 \title{grottaBar}
 \usage{
 grottaBar(x,groupName,scoreName,strataName = NULL,
-          colorScheme="lowGreen",
+          colorScheme="whiteBlue",
+          colorScheme.reverse = FALSE,
           printNumbers = "count",
           nCol = 1, dir = "v",
           width = 0.9,
           textSize = 15, numberSize = 5,
           textFace = "plain",
-          textColor = "black", textCut = 0,
+          textColor = NULL,
           lineSize = 0.5,
+          lineColor = "black",
+          drawLines = TRUE,
           returnData = FALSE,
           ...
 )
@@ -20,13 +23,15 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
 \arguments{
 \item{x}{a 2- or 3- dimensional table, returned by the table() function}
 
-\item{groupName}{a character string giving the name of the group varialble}
+\item{groupName}{a character string giving the name of the group variable}
 
-\item{scoreName}{a character string giving outcome (mRS) labels}
+\item{scoreName}{a character string giving outcome labels}
 
 \item{strataName}{a character string giving the strata variable name}
 
-\item{colorScheme}{a character string indicating the colors that should be used by the plot}
+\item{colorScheme}{a character string indicating the colors that should be used by the plot, or a discrete fill scale returned by ggplot2.}
+
+\item{colorScheme.reverse}{A logical  indicating if the colour scheme should be reversed.}
 
 \item{printNumbers}{a character string indicating if numbers should be printed for each category.}
 
@@ -42,11 +47,13 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
 
 \item{textFace}{a character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".}
 
-\item{textColor}{vector of two colors for text labels}
-
-\item{textCut}{Controls when the color of the text changes. The first \code{textCut} categories will use the first color}
+\item{textColor}{vector of colors for text labels}
 
 \item{lineSize}{a number indicating the thickness of lines in the plot}
+
+\item{lineColor}{vector color for lines in the plot}
+
+\item{drawLines}{boolean indicating if connecting lines should be drawn or not}
 
 \item{returnData}{a boolean indicating if the data used to create the plot should be returned. For expert users only.}
 
@@ -64,18 +71,20 @@ A Grotta bar chart is a common data visualisation tool in stroke research, and i
 chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 categories across groups.
 
-The tool provides three default options for \code{colorScheme}:
-\itemize{
+The tool provides the following options for \code{colorScheme}:
+\describe{
+    \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
     \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
+    \item{\code{"none"}}{No scale is supplied and default ggplot2 fill colours are used}
 }
 
-In addition to these, setting \code{colorScheme="custom"} allows for a
-user-specified color scheme by using the ggplot2 family of \code{scale_fill_} functions.
+In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 
 The options for \code{printNumbers} are:
-\itemize{
+\describe{
     \item{\code{"count"}}{ The raw counts in the table.}
     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
@@ -88,58 +97,54 @@ The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 }
 \examples{
 
+
 df <- alteplase
-df$mRS <- df$mRS -1
+
 x <- table(mRS=df$mRS,
-           Group=df$treat,
-           Time=df$time)
+          Group=df$treat,
+          Time=df$time)
 
 grottaBar(x,groupName="Group",
-          scoreName = "mRS",
-          strataName="Time",
-          colorScheme ="lowGreen"
- )
+         scoreName = "mRS",
+         strataName="Time"
+)
 
-  grottaBar(x,groupName="Time",
-          scoreName = "mRS",
-          strataName="Group",
-          colorScheme ="grayscale"
- )
+
+grottaBar(x,groupName="Time",
+         scoreName = "mRS",
+         strataName="Group",
+         textColor = c(rep("black",4),rep("white",3))
+)
+
 
 x <- table(mRS=df$mRS,
           Group=df$treat)
 
-   grottaBar(x,groupName="Group",
-             scoreName = "mRS",
-             colorScheme ="custom"
-   ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 
-  grottaBar(x,groupName="Group",
-          scoreName = "mRS",
-          colorScheme ="custom",
-          textFace = "italic",
-          printNumbers = "count.percentage"
- ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         colorScheme = FALSE
+)
 
-
-grottaBar(
-          x,
-          groupName = "Group",
-          scoreName = "mRS",
-          colorScheme = "custom",
-          textFace = "italic",
-          printNumbers = "count.percentage"
-) + viridis::scale_fill_viridis(discrete = TRUE, direction = -1)
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+)
 
 
 grottaBar(x,groupName="Group",
-           scoreName = "mRS",
-           colorScheme ="custom",
-           textFace = "italic",
-           textColor = c("black","white"),
-           textCut = 5,
-           printNumbers = "count.percentage"
-) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+         scoreName = "mRS",
+         colorScheme = FALSE
+)+ ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 
 
+
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         printNumbers = "count.percentage",
+         colorScheme = "Grayscale"
+)
+}
+\references{
+National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group. "Tissue plasminogen activator for acute ischemic stroke." New England Journal of Medicine 333.24 (1995): 1581-1588.
 }
