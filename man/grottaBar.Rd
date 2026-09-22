@@ -5,7 +5,7 @@
 \title{grottaBar}
 \usage{
 grottaBar(x,groupName,scoreName,strataName = NULL,
-          colorScheme="whiteBlue",
+          colorScheme="Blues",
           colorScheme.reverse = FALSE,
           printNumbers = "count",
           nCol = 1, dir = "v",
@@ -71,16 +71,11 @@ A Grotta bar chart is a common data visualisation tool in stroke research, and i
 chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 categories across groups.
 
-The tool provides the following options for \code{colorScheme}:
-\describe{
-    \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
-    \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
-    \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
-    \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
-    \item{\code{"none"}}{No scale is supplied and default ggplot2 fill colours are used}
-}
+\code{colorScheme} supports all color schemes from ColorBrewer. See [https://colorbrewer2.org](https://colorbrewer2.org) for more information, or
+run \code{RColorBrewer::display.brewer.all()} to display available options. If the number of categories
+exceeds what is provided by ColorBrewer, additional values are interpolated as needed.
 
-In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+In addition, setting colorScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
 user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 
 The options for \code{printNumbers} are:
@@ -142,7 +137,7 @@ grottaBar(x,groupName="Group",
 grottaBar(x,groupName="Group",
          scoreName = "mRS",
          printNumbers = "count.percentage",
-         colorScheme = "Grayscale"
+         colorScheme = "Greys"
 )
 }
 \references{

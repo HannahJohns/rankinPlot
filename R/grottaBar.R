@@ -4,7 +4,7 @@
 #'
 #' @usage
 #' grottaBar(x,groupName,scoreName,strataName = NULL,
-#'           colorScheme="whiteBlue",
+#'           colorScheme="Blues",
 #'           colorScheme.reverse = FALSE,
 #'           printNumbers = "count",
 #'           nCol = 1, dir = "v",
@@ -45,16 +45,11 @@
 #' chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 #' categories across groups.
 #'
-#' The tool provides the following options for \code{colorScheme}:
-#' \describe{
-#'     \item{\code{"whiteBlueGradient"}}{ A gradient from white to blue, where low scores are white}
-#'     \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
-#'     \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
-#'     \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
-#'     \item{\code{"none"}}{No scale is supplied and default ggplot2 fill colours are used}
-#' }
+#' \code{colorScheme} supports all color schemes from ColorBrewer. See [https://colorbrewer2.org](https://colorbrewer2.org) for more information, or
+#' run \code{RColorBrewer::display.brewer.all()} to display available options. If the number of categories
+#' exceeds what is provided by ColorBrewer, additional values are interpolated as needed.
 #'
-#' In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+#' In addition, setting colorScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
 #' user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 #'
 #' The options for \code{printNumbers} are:
@@ -121,13 +116,13 @@
 #'grottaBar(x,groupName="Group",
 #'          scoreName = "mRS",
 #'          printNumbers = "count.percentage",
-#'          colorScheme = "Grayscale"
+#'          colorScheme = "Greys"
 #')
 grottaBar <- function(x,
                       groupName,
                       scoreName,
                       strataName = NULL,
-                      colorScheme = "whiteBlue",
+                      colorScheme = "Blues",
                       colorScheme.reverse = FALSE,
                       printNumbers = "count",
                       nCol = 1,
@@ -179,7 +174,6 @@ grottaBar <- function(x,
     }
   }
 
-
   if(length(colorScheme) == 1 & is.character(colorScheme)){
 
     if(colorScheme == "custom"){
@@ -188,20 +182,20 @@ grottaBar <- function(x,
     }
 
     if(colorScheme == "lowGreen"){
-      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RedYellowGreen\" and colorScheme.reverse=TRUE instead.")
-      colorScheme <- "RedYellowGreen"
+      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RdYlGn\" and colorScheme.reverse=TRUE instead.")
+      colorScheme <- "RdYlGn"
       colorScheme.reverse <- TRUE
     }
 
     if(colorScheme == "lowRed"){
-      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RedYellowGreen\" and colorScheme.reverse=FALSE instead.")
-      colorScheme <- "RedYellowGreen"
+      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RdYlGn\" and colorScheme.reverse=FALSE instead.")
+      colorScheme <- "RdYlGn"
       colorScheme.reverse <- FALSE
     }
 
     if(colorScheme == "grayscale"){
-      warning("colorScheme = \"grayscale\" is depreciated. Please use colorScheme=\"Grayscale\" instead.")
-      colorScheme <- "Grayscale"
+      warning("colorScheme = \"grayscale\" is depreciated. Please use colorScheme=\"Greys\" instead.")
+      colorScheme <- "Greys"
     }
   }
 
@@ -330,43 +324,113 @@ grottaBar <- function(x,
 
   } else {
 
-
     if(length(colorScheme)>1 | !("character" %in% class(colorScheme))){
       stop("colorScheme must be either a single character string or a ScaleDiscrete object.")
     }
 
     if ( !(colorScheme  %in% c("custom","none"))){
-      if(colorScheme == "whiteBlue"){
 
-        fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+      if(!(colorScheme %in% rownames(RColorBrewer::brewer.pal.info))) stop("colorScheme should specify a colorBrewer pallette")
 
-      } else if(colorScheme=="RedYellowGreen"){
+      if(length(scoreLevels) <= RColorBrewer::brewer.pal.info[colorScheme,"maxcolors"]){
+        fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),colorScheme)
+      } else {
+        # If we don't have enough space in the palette, fill it out
 
-        if(length(scoreLevels) <= 11){
-          fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"RdYlGn")
-        } else {
-          # Extend out the colour space if there's not enough in the pallette
-          fill_colours <- RColorBrewer::brewer.pal(11,"RdYlGn")
+
+        if(RColorBrewer::brewer.pal.info[colorScheme,"category"] %in% c("div","seq") &
+           !(colorScheme %in% c("Spectral"))
+           ){
+
+          #Easy for 2D color spectrums
+
+          fill_colours <- RColorBrewer::brewer.pal(RColorBrewer::brewer.pal.info[colorScheme,"maxcolors"],
+                                                   colorScheme)
 
           fill_colours <- unique(c(
-            grDevices::colorRampPalette(c(fill_colours[1],fill_colours[6]))(floor(length(scoreLevels)/2)+1),
-            grDevices::colorRampPalette(c(fill_colours[6],fill_colours[11]))(ceiling(length(scoreLevels)/2))
+            grDevices::colorRampPalette(c(fill_colours[1],
+                                          fill_colours[ceiling(RColorBrewer::brewer.pal.info[colorScheme,"maxcolors"]/2)]
+                                          ))(floor(length(scoreLevels)/2)+1),
+            grDevices::colorRampPalette(c(fill_colours[ceiling(RColorBrewer::brewer.pal.info[colorScheme,"maxcolors"]/2)],
+                                          fill_colours[RColorBrewer::brewer.pal.info[colorScheme,"maxcolors"]]
+                                          ))(ceiling(length(scoreLevels)/2))
           )
           )
-        }
 
-      } else if (colorScheme %in% c("Grayscale","Greyscale")){
-
-        if(length(scoreLevels) <= 9){
-          fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"Greys")
         } else {
-          # Extend out the colour space if there's not enough in the pallette
-          fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#000000"))(length(scoreLevels))
-        }
 
-      } else {
-        stop("colorScheme not recognised")
-      }
+          # For more complicated pallettes we need to be a bit more sophisticated
+          # Just pepper
+
+          fill_colours <- RColorBrewer::brewer.pal(RColorBrewer::brewer.pal.info[colorScheme,"maxcolors"],
+                                                   colorScheme)
+
+          while(length(fill_colours) < length(scoreLevels)){
+
+            n_inserted <- length(scoreLevels)-length(fill_colours)
+            insert_positions <- seq(1,
+                                    n_inserted,
+                                    length.out=length(fill_colours)-1
+            )
+            insert_positions <- order((insert_positions-round(insert_positions))^2)[1:min(n_inserted,length(insert_positions))]
+            insert_positions <- insert_positions[order(insert_positions)]
+
+            new_fill_colors <- c(
+              fill_colours[1:(insert_positions[1])],
+              NA
+            )
+
+            if(length(insert_positions)>2){
+              for(i in 2:(length(insert_positions))){
+
+                new_fill_colors <- c(
+                  new_fill_colors,
+                  c(fill_colours[(insert_positions[i-1]+1):(insert_positions[i])],NA)
+                )
+              }
+            }
+
+            new_fill_colors <- c(
+              new_fill_colors,
+              c(fill_colours[(max(insert_positions)+1):length(fill_colours)])
+            )
+
+            fill_colours <- new_fill_colors
+
+          }
+
+
+          # Traverse across each NA and interpolate the color
+          low <- high <- min(which( is.na(new_fill_colors)))-1
+          while(low < length(new_fill_colors)){
+            na_found <- FALSE
+
+            while((!na_found | is.na(new_fill_colors[high])) & high <= length(new_fill_colors)){
+              if(is.na(new_fill_colors[high])) na_found <- TRUE
+              high <- high + 1
+            }
+
+            if(na_found){
+              new_fill_colors[low:high] <- grDevices::colorRampPalette(c( new_fill_colors[low],
+                                                                          new_fill_colors[high]
+              ))(high-low+1)
+
+              remainingMissing <- which( is.na(new_fill_colors))-1
+              if(length(remainingMissing)>0){
+                low <- high <- min(remainingMissing)
+              } else {
+                low <- high <- Inf
+              }
+            } else {
+              break
+            }
+          }
+
+          fill_colours <- new_fill_colors
+
+        } # End if interpolate every point
+      } # End if need to interpolate
+
 
       if(colorScheme.reverse){
         fill_colours <- rev(fill_colours)

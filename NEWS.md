@@ -1,7 +1,7 @@
 # rankinPlot 1.2
 
 Changes have been made to grottaBar()
-* A new colour scheme has been added, "whiteBlueGradient" which is now the default option.
+* Colour schemes are now handled by ColorBrewer. If more colours are needed than what ColorBrewer provides they are interpolated as needed
 * Grottabar now accepts an arbitrary number of colours for the printed numbers. The old approach (the textCut argument) is depreciated.
 * Use of a "custom" colour scale is depreciated. Instead, a ggplot2 scale_fill_ function can now be fed in as an argument to colorScheme.
 

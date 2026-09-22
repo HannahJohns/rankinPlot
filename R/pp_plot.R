@@ -27,7 +27,7 @@
 #'         confint.angle = "fixed",
 #'         confint.level = 0.95,
 #'         bar = TRUE,
-#'         bar.colorScheme = "whiteBlue",
+#'         bar.colorScheme = "Blues",
 #'         bar.colorScheme.reverse = FALSE,
 #'         bar.width = 0.1,
 #'         bar.lineColor = "black",
@@ -90,15 +90,11 @@
 #' points correspond to cumulative probabilities that match the upper/lower bound of the odds ratio. Two options are given for the direction of these lines. "fixed" indicates that
 #' all confidence intervals should be drawn at 45 degrees, while "proportional.odds" indicates that they should be drawn perpendicular to the proportional odds contour line.
 #'
-#' The tool provides the following options for \code{bar.colorScheme}:
-#' \describe{
-#'     \item{\code{"whiteBlue"}}{ A gradient from white to blue, where low scores are white}
-#'     \item{\code{"RedYellowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored red}
-#'     \item{\code{"Grayscale"}}{Grayscale coloring where low scores are colored light and high scores are colored dark}
-#'     \item{\code{"none", FALSE, NULL or NA}}{No scale is supplied and default ggplot2 fill colours are used}
-#' }
+#' \code{bar.colorScheme} supports all color schemes from ColorBrewer. See [https://colorbrewer2.org](https://colorbrewer2.org) for more information, or
+#' run \code{RColorBrewer::display.brewer.all()} to display available options. If the number of categories
+#' exceeds what is provided by ColorBrewer, additional values are interpolated as needed.
 #'
-#' In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+#' In addition, setting colorScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
 #' user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 #'
 #' The options for \code{bar.text} are:
@@ -160,7 +156,7 @@
 #'        reverse.scores = TRUE,
 #'        bar.text = FALSE,
 #'        confint.angle = "fixed",
-#'        bar.colorScheme = "RedYellowGreen",
+#'        bar.colorScheme = "RdBu",
 #'        bar.colorScheme.reverse = TRUE
 #')
 #'
@@ -170,7 +166,7 @@
 #'        reverse.scores = TRUE,
 #'        bar.text = FALSE,
 #'        confint.angle = "proportional.odds",
-#'        bar.colorScheme = "RedYellowGreen",
+#'        bar.colorScheme = "RdBu",
 #'        bar.colorScheme.reverse = TRUE,
 #'        contour = TRUE,
 #'        polygon = FALSE,
@@ -207,7 +203,7 @@
 #'        bar.text = FALSE,
 #'        confint= FALSE,
 #'        panel=FALSE,
-#'        bar.colorScheme = "RedYellowGreen",
+#'        bar.colorScheme = "RdBu",
 #'        bar.colorScheme.reverse = TRUE
 #')
 pp_plot <- function(x,
@@ -238,7 +234,7 @@ pp_plot <- function(x,
                     confint.level = 0.95,
 
                     bar = TRUE,
-                    bar.colorScheme = "whiteBlue",
+                    bar.colorScheme = "Blues",
                     bar.colorScheme.reverse = FALSE,
                     bar.width = 0.1,
                     bar.lineColor = "black",
@@ -777,42 +773,112 @@ pp_plot <- function(x,
     } else {
 
       if(length(bar.colorScheme)>1 | !("character" %in% class(bar.colorScheme))){
-        stop("bar.colorScheme must be either a single character string or a ScaleDiscrete object.")
+        stop("colorScheme must be either a single character string or a ScaleDiscrete object.")
       }
 
       if ( !(bar.colorScheme  %in% c("custom","none"))){
 
-        if(bar.colorScheme == "whiteBlue"){
+        if(!(bar.colorScheme %in% rownames(RColorBrewer::brewer.pal.info))) stop("bar.colorScheme should specify a colorBrewer pallette")
 
-          fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#055882"))(length(scoreLevels))
+        if(length(scoreLevels) <= RColorBrewer::brewer.pal.info[bar.colorScheme,"maxcolors"]){
+          fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),bar.colorScheme)
+        } else {
+          # If we don't have enough space in the palette, fill it out
 
-        } else if(bar.colorScheme=="RedYellowGreen"){
 
-          if(length(scoreLevels) <= 11){
-            fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"RdYlGn")
-          } else {
-            # Extend out the colour space if there's not enough in the pallette
-            fill_colours <- RColorBrewer::brewer.pal(11,"RdYlGn")
+          if(RColorBrewer::brewer.pal.info[bar.colorScheme,"category"] %in% c("div","seq") &
+             !(bar.colorScheme %in% c("Spectral"))
+          ){
+
+            #Easy for 2D color spectrums
+
+            fill_colours <- RColorBrewer::brewer.pal(RColorBrewer::brewer.pal.info[bar.colorScheme,"maxcolors"],
+                                                     bar.colorScheme)
 
             fill_colours <- unique(c(
-              grDevices::colorRampPalette(c(fill_colours[1],fill_colours[6]))(floor(length(scoreLevels)/2)+1),
-              grDevices::colorRampPalette(c(fill_colours[6],fill_colours[11]))(ceiling(length(scoreLevels)/2))
+              grDevices::colorRampPalette(c(fill_colours[1],
+                                            fill_colours[ceiling(RColorBrewer::brewer.pal.info[bar.colorScheme,"maxcolors"]/2)]
+              ))(floor(length(scoreLevels)/2)+1),
+              grDevices::colorRampPalette(c(fill_colours[ceiling(RColorBrewer::brewer.pal.info[bar.colorScheme,"maxcolors"]/2)],
+                                            fill_colours[RColorBrewer::brewer.pal.info[bar.colorScheme,"maxcolors"]]
+              ))(ceiling(length(scoreLevels)/2))
             )
             )
-          }
 
-        } else if (bar.colorScheme %in% c("Grayscale","Greyscale")){
-
-          if(length(scoreLevels) <= 9){
-            fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),"Greys")
           } else {
-            # Extend out the colour space if there's not enough in the pallette
-            fill_colours <- grDevices::colorRampPalette(c("#FFFFFF","#000000"))(length(scoreLevels))
-          }
 
-        } else {
-          stop("bar.colorScheme not recognised")
-        }
+            # For more complicated pallettes we need to be a bit more sophisticated
+            # Just pepper
+
+            fill_colours <- RColorBrewer::brewer.pal(RColorBrewer::brewer.pal.info[bar.colorScheme,"maxcolors"],
+                                                     bar.colorScheme)
+
+            while(length(fill_colours) < length(scoreLevels)){
+
+              n_inserted <- length(scoreLevels)-length(fill_colours)
+              insert_positions <- seq(1,
+                                      n_inserted,
+                                      length.out=length(fill_colours)-1
+              )
+              insert_positions <- order((insert_positions-round(insert_positions))^2)[1:min(n_inserted,length(insert_positions))]
+              insert_positions <- insert_positions[order(insert_positions)]
+
+              new_fill_colors <- c(
+                fill_colours[1:(insert_positions[1])],
+                NA
+              )
+
+              if(length(insert_positions)>2){
+                for(i in 2:(length(insert_positions))){
+
+                  new_fill_colors <- c(
+                    new_fill_colors,
+                    c(fill_colours[(insert_positions[i-1]+1):(insert_positions[i])],NA)
+                  )
+                }
+              }
+
+              new_fill_colors <- c(
+                new_fill_colors,
+                c(fill_colours[(max(insert_positions)+1):length(fill_colours)])
+              )
+
+              fill_colours <- new_fill_colors
+
+            }
+
+
+            # Traverse across each NA and interpolate the color
+            low <- high <- min(which( is.na(new_fill_colors)))-1
+            while(low < length(new_fill_colors)){
+              na_found <- FALSE
+
+              while((!na_found | is.na(new_fill_colors[high])) & high <= length(new_fill_colors)){
+                if(is.na(new_fill_colors[high])) na_found <- TRUE
+                high <- high + 1
+              }
+
+              if(na_found){
+                new_fill_colors[low:high] <- grDevices::colorRampPalette(c( new_fill_colors[low],
+                                                                            new_fill_colors[high]
+                ))(high-low+1)
+
+                remainingMissing <- which( is.na(new_fill_colors))-1
+                if(length(remainingMissing)>0){
+                  low <- high <- min(remainingMissing)
+                } else {
+                  low <- high <- Inf
+                }
+              } else {
+                break
+              }
+            }
+
+            fill_colours <- new_fill_colors
+
+          } # End if interpolate every point
+        } # End if need to interpolate
+
 
         if(bar.colorScheme.reverse){
           fill_colours <- rev(fill_colours)

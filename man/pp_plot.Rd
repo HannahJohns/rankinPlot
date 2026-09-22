@@ -26,7 +26,7 @@ pp_plot(x,
         confint.angle = "fixed",
         confint.level = 0.95,
         bar = TRUE,
-        bar.colorScheme = "whiteBlue",
+        bar.colorScheme = "Blues",
         bar.colorScheme.reverse = FALSE,
         bar.width = 0.1,
         bar.lineColor = "black",
@@ -133,15 +133,11 @@ Confidence intervals are estimated using Fisher's exact test and correspond to a
 points correspond to cumulative probabilities that match the upper/lower bound of the odds ratio. Two options are given for the direction of these lines. "fixed" indicates that
 all confidence intervals should be drawn at 45 degrees, while "proportional.odds" indicates that they should be drawn perpendicular to the proportional odds contour line.
 
-The tool provides the following options for \code{bar.colorScheme}:
-\describe{
-    \item{\code{"whiteBlue"}}{ A gradient from white to blue, where low scores are white}
-    \item{\code{"RedYellowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored red}
-    \item{\code{"Grayscale"}}{Grayscale coloring where low scores are colored light and high scores are colored dark}
-    \item{\code{"none", FALSE, NULL or NA}}{No scale is supplied and default ggplot2 fill colours are used}
-}
+\code{bar.colorScheme} supports all color schemes from ColorBrewer. See [https://colorbrewer2.org](https://colorbrewer2.org) for more information, or
+run \code{RColorBrewer::display.brewer.all()} to display available options. If the number of categories
+exceeds what is provided by ColorBrewer, additional values are interpolated as needed.
 
-In addition, setting colourScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+In addition, setting colorScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
 user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 
 The options for \code{bar.text} are:
@@ -197,7 +193,7 @@ pp_plot(x,groupName="Group",
        reverse.scores = TRUE,
        bar.text = FALSE,
        confint.angle = "fixed",
-       bar.colorScheme = "RedYellowGreen",
+       bar.colorScheme = "RdBu",
        bar.colorScheme.reverse = TRUE
 )
 
@@ -207,7 +203,7 @@ pp_plot(x,groupName="Group",
        reverse.scores = TRUE,
        bar.text = FALSE,
        confint.angle = "proportional.odds",
-       bar.colorScheme = "RedYellowGreen",
+       bar.colorScheme = "RdBu",
        bar.colorScheme.reverse = TRUE,
        contour = TRUE,
        polygon = FALSE,
@@ -244,7 +240,7 @@ pp_plot(x,groupName="Group",
        bar.text = FALSE,
        confint= FALSE,
        panel=FALSE,
-       bar.colorScheme = "RedYellowGreen",
+       bar.colorScheme = "RdBu",
        bar.colorScheme.reverse = TRUE
 )
 }
