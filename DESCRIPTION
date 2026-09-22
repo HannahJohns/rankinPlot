@@ -2,8 +2,11 @@ Package: rankinPlot
 Type: Package
 Title: Convenient Plotting for the Modified Rankin Scale and Other Ordinal Outcome Data
 Version: 1.2.0
-Authors@R: person("Hannah","Johns", role=c("aut","cre"),email="dr.hannah.johns@gmail.com",comment=c(ORCID="0000-0003-2135-0504"))
-Maintainer: Hannah Johns <htjohns@gmail.com>
+Authors@R: c(
+    person("Hannah","Johns", role=c("aut","cre"),email="dr.hannah.johns@gmail.com",comment=c(ORCID="0000-0003-2135-0504")),
+    person("Andreas Gammelgaard", "Damsbo", role="aut",comment=c(ORCID="0000-0002-7559-1154"))
+  )
+Maintainer: Hannah Johns <dr.hannah.johns@gmail.com>
 Description: Provides convenient tools for visualising ordinal outcome data following conventions within stroke research literature.
 License: GPL (>=2.0)
 Encoding: UTF-8
