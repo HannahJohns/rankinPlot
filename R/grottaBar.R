@@ -68,7 +68,11 @@
 #'
 #' @references
 #' National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group. "Tissue plasminogen activator for acute ischemic stroke." New England Journal of Medicine 333.24 (1995): 1581-1588.
-#'
+#' 
+#' Rohmann, Jessica L., et al. "Adjusted horizontal stacked bar graphs (“Grotta bars”) for consistent presentation of observational stroke study results." European Stroke Journal 8.1 (2023): 370-379.
+#' 
+#' Forrest, Meghan R., et al. "Use of stacked proportional bar graphs (“grotta bars”) in observational neurology research: a meta-research study." Neurology 104.4 (2025): e210169.
+#'  
 #' @examples
 #'
 #'
@@ -112,12 +116,65 @@
 #')+ ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 #'
 #'
-#'
 #'grottaBar(x,groupName="Group",
 #'          scoreName = "mRS",
 #'          printNumbers = "count.percentage",
 #'          colorScheme = "Greys"
 #')
+#' 
+#' # Example with IPTW weights
+#'  
+#'  alteplase_confounded <- alteplase
+#'  ps = c("0-90" = 0.7,
+#'         "91-180" = 0.6,
+#'         "181-270" = 0.3,
+#'         "271-360" = 0.7
+#'  )
+#'  set.seed(123)
+#'  alteplase_confounded <- by(alteplase_confounded,alteplase_confounded$time,function(x){
+#'  
+#'          n_alt <- round(nrow(x)*ps[unique(x$time)])
+#'          n_pbo <- round(nrow(x)*(1-ps[unique(x$time)]))
+#'  
+#'          this_probs <- prop.table(table(x$mRS,x$treat),margin=2)
+#'         
+#'         rbind(
+#'                 data.frame(treat="Alteplase",
+#'                             mRS = sample(as.numeric(rownames(this_probs)),
+#'                                         size = n_alt, replace=TRUE,
+#'                                         prob=this_probs[,"Alteplase"]),
+#'                             time=unique(x$time)
+#'                             ),
+#'                 data.frame(treat="Placebo",
+#'                             mRS = sample(as.numeric(rownames(this_probs)),
+#'                                         size = n_pbo, replace=TRUE,
+#'                                         prob=this_probs[,"Placebo"]),
+#'                             time=unique(x$time)
+#'                             )
+#'         )
+#' })
+#' alteplase_confounded <- do.call("rbind",alteplase_confounded)
+#' alteplase_confounded$treat <- factor(alteplase_confounded$treat,levels=levels(alteplase$treat))
+#'
+#' # Raw table, with confounding
+#' x_confounded <- xtabs(~ mRS + treat, data=alteplase_confounded) 
+#'
+#' # Using IPTW to remove confounding
+#' 
+#' propensity <- ps[alteplase_confounded$time]
+#' alteplase_confounded$iptw_weight <- ifelse(alteplase_confounded$treat == "Alteplase",
+#'                                            1/propensity,
+#'                                            1/(1-propensity)
+#'                                           )
+#' x_weighted <- xtabs(iptw_weight ~ mRS + treat, data=alteplase_confounded) 
+#'
+#' grottaBar(x_confounded, groupName = "treat", scoreName = "mRS", printNumbers = "percentage")
+#' grottaBar(x_weighted, groupName = "treat", scoreName = "mRS",printNumbers = "percentage")
+#' 
+#' # The original dataset for comparison
+#' x <- xtabs(~ mRS + treat, data=alteplase) 
+#' grottaBar(x, groupName = "treat", scoreName = "mRS", printNumbers = "percentage")
+#' 
 grottaBar <- function(x,
                       groupName,
                       scoreName,
@@ -176,25 +233,24 @@ grottaBar <- function(x,
 
   if(length(colorScheme) == 1 & is.character(colorScheme)){
 
+    # Old behaviour that's been superseded
+    # No need for a warning, just quietly change input
+
     if(colorScheme == "custom"){
-      warning("colorScheme = \"custom\" is depreciated. Please use colorScheme = \"none\", NA, NULL or FALSE instead.")
       colorScheme <- "none"
     }
 
     if(colorScheme == "lowGreen"){
-      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RdYlGn\" and colorScheme.reverse=TRUE instead.")
       colorScheme <- "RdYlGn"
       colorScheme.reverse <- TRUE
     }
 
     if(colorScheme == "lowRed"){
-      warning("colorScheme = \"lowGreen\" is depreciated. Please use colorScheme = \"RdYlGn\" and colorScheme.reverse=FALSE instead.")
       colorScheme <- "RdYlGn"
       colorScheme.reverse <- FALSE
     }
 
     if(colorScheme == "grayscale"){
-      warning("colorScheme = \"grayscale\" is depreciated. Please use colorScheme=\"Greys\" instead.")
       colorScheme <- "Greys"
     }
   }
@@ -207,7 +263,6 @@ grottaBar <- function(x,
   # https://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
 
   group <- p_prev <- p <- score <- line_id <- n <- NULL
-
 
   x <- as.data.frame(x)
 
@@ -279,7 +334,7 @@ grottaBar <- function(x,
 
   if(!is.null(args$textCut)){
 
-    warning("Using `textCut` is depreciated. Please provide a character vector to the `textColor` argument instead.")
+    lifecycle::deprecate_soft(when="1.2.0",what="grottaBar(textCut)",with="grottaBar(textColor)")
 
     new_textColor <- rep(textColor[1],length(scoreLevels))
     if(length(textColor)>1){
@@ -336,7 +391,6 @@ grottaBar <- function(x,
         fill_colours <- RColorBrewer::brewer.pal(length(scoreLevels),colorScheme)
       } else {
         # If we don't have enough space in the palette, fill it out
-
 
         if(RColorBrewer::brewer.pal.info[colorScheme,"category"] %in% c("div","seq") &
            !(colorScheme %in% c("Spectral"))
