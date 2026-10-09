@@ -8,7 +8,7 @@ Authors@R: c(
     person("Florian", "van Leeuwen", role="aut",comment=c(ORCID="0009-0009-7092-2848"))
   )
 Maintainer: Hannah Johns <dr.hannah.johns@gmail.com>
-Description: Provides convenient tools for visualising ordinal outcome data following conventions within stroke research literature.
+Description: Provides convenient tools for visualising ordinal outcome data following conventions within stroke research literature. It currently supports the "Grotta Bar" approach pioneered by The National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group (1995) <doi:10.1056/NEJM199512143332401> and Probability-Probability plots for visualising Desirability of Outcome Ranking (DOOR) scales with large numbers of categories proposed by Johns et al. (2026) <doi:10.1177/17474930261475853>.
 License: GPL (>=2.0)
 Encoding: UTF-8
 LazyData: true

@@ -2,29 +2,12 @@
 #'
 #' Automates the production of a Grotta Bar using \code{ggplot()}
 #'
-#' @usage
-#' grottaBar(x,groupName,scoreName,strataName = NULL,
-#'           colorScheme="Blues",
-#'           colorScheme.reverse = FALSE,
-#'           printNumbers = "count",
-#'           nCol = 1, dir = "v",
-#'           width = 0.9,
-#'           textSize = 15, numberSize = 5,
-#'           textFace = "plain",
-#'           textColor = NULL,
-#'           lineSize = 0.5,
-#'           lineColor = "black",
-#'           drawLines = TRUE,
-#'           returnData = FALSE,
-#'           ...
-#' )
-#'
 #' @param x a 2- or 3- dimensional table, returned by the table() function
 #' @param groupName a character string giving the name of the group variable
 #' @param scoreName a character string giving outcome labels
 #' @param strataName a character string giving the strata variable name
 #' @param colorScheme a character string indicating the colors that should be used by the plot, or a discrete fill scale returned by ggplot2.
-#' @param colorScheme.reverse A logical  indicating if the colour scheme should be reversed.
+#' @param colorScheme.reverse A logical indicating if the colour scheme should be reversed.
 #' @param width a number adjusting the width of the lines between bars
 #' @param printNumbers a character string indicating if numbers should be printed for each category.
 #' @param nCol an integer indicating the number of columns to use for displaying stratified results. Has no effect if no stratification is used.
@@ -45,37 +28,39 @@
 #' chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 #' categories across groups.
 #'
-#' \code{colorScheme} supports all color schemes from ColorBrewer. See [https://colorbrewer2.org](https://colorbrewer2.org) for more information, or
-#' run \code{RColorBrewer::display.brewer.all()} to display available options. If the number of categories
+#' \code{colorScheme} supports all color schemes from ColorBrewer. See \url{https://colorbrewer2.org} for more information, or
+#' run \code{RColorBrewer::\link[RColorBrewer]{display.brewer.all}()} to display available options. If the number of categories
 #' exceeds what is provided by ColorBrewer, additional values are interpolated as needed.
 #'
-#' In addition, setting colorScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::scale_fill_brewer()} allows for a
+#' In addition, setting colorScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::\link[ggplot2]{scale_fill_brewer}()}) allows for a
 #' user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 #'
 #' The options for \code{printNumbers} are:
 #' \describe{
-#'     \item{\code{"count"}}{ The raw counts in the table.}
-#'     \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
-#'     \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
-#'     \item{\code{"count.percentage"}}{ The raw count with percentage in parentheses.}
-#'     \item{\code{"none"}}{ Do not print any numbers.}
+#' \item{\code{count}}{ The raw counts in the table.}
+#' \item{\code{proportion}}{ The within-group proportion, rounded to 2 decimal places.}
+#' \item{\code{percentage}}{ The within-group percentage, rounded to 2 decimal places.}
+#' \item{\code{count.percentage}}{ The raw count with percentage in parentheses.}
+#' \item{\code{none}}{ Do not print any numbers.}
 #' }
 #'
 #' These options may be abbreviated. \code{"p"} is not a valid abbreviation as it matches to multiple options.
 #' The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 #'
-#' @returns A ggplot object, or a list containing a ggplot object and the data used to generate it.
-#'
+#' @returns
+#' \describe{
+#'  \item{If \code{returnData} is \code{FALSE}}{A ggplot object}
+#'  \item{If \code{returnData} is \code{TRUE}}{A list containing a ggplot object and the data used to generate it}
+#'}
+#' 
 #' @references
 #' National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group. "Tissue plasminogen activator for acute ischemic stroke." New England Journal of Medicine 333.24 (1995): 1581-1588.
 #' 
-#' Rohmann, Jessica L., et al. "Adjusted horizontal stacked bar graphs (“Grotta bars”) for consistent presentation of observational stroke study results." European Stroke Journal 8.1 (2023): 370-379.
+#' Rohmann, Jessica L., et al. "Adjusted horizontal stacked bar graphs ("Grotta bars") for consistent presentation of observational stroke study results." European Stroke Journal 8.1 (2023): 370-379. 
 #' 
-#' Forrest, Meghan R., et al. "Use of stacked proportional bar graphs (“grotta bars”) in observational neurology research: a meta-research study." Neurology 104.4 (2025): e210169.
+#' Forrest, Meghan R., et al. "Use of stacked proportional bar graphs ("Grotta bars") in observational neurology research: a meta-research study." Neurology 104.4 (2025): e210169.
 #'  
 #' @examples
-#'
-#'
 #'df <- alteplase
 #'
 #'x <- table(mRS=df$mRS,
